@@ -58,7 +58,7 @@ export interface PyApi {
   stop_recording(): Promise<AnalysisResult>;
   get_level(): Promise<number>;
   get_spectrum(): Promise<{ freqs: number[]; db: number[] }>;
-  play(loop: boolean): Promise<void>;
+  play(loop: boolean, start?: number): Promise<void>;
   stop_playback(): Promise<void>;
   list_scales(): Promise<Scale[]>;
   solfege_for(scaleKey: string, tonic: string): Promise<string>;
@@ -67,5 +67,5 @@ export interface PyApi {
   get_session(id: string): Promise<AnalysisResult | null>;
   delete_session(id: string): Promise<boolean>;
   label_session(id: string, label: string): Promise<boolean>;
-  play_session(id: string, loop: boolean): Promise<void>;
+  play_session(id: string, loop: boolean, start?: number): Promise<void>;
 }

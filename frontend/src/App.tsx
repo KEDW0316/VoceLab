@@ -31,8 +31,33 @@ export default function App() {
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [baselineId, setBaselineId] = useState<string | null>(null);
   const [baseline, setBaseline] = useState<Record<string, number | null> | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [playhead, setPlayhead] = useState(0); // 재생 시작 위치(초)
   const levelTimer = useRef<number | null>(null);
   const elapsedTimer = useRef<number | null>(null);
+  const playTimer = useRef<number | null>(null);
+
+  // 현재 표시 중인 오디오를 start(초)부터 재생. 녹음/세션 모두 currentId로 통일.
+  const playFrom = useCallback(
+    (sec: number) => {
+      const dur = result?.duration ?? 0;
+      setPlayhead(sec);
+      if (currentId) api.play_session(currentId, feedback, sec);
+      else api.play(feedback, sec);
+      setPlaying(true);
+      if (playTimer.current) window.clearTimeout(playTimer.current);
+      if (!feedback && dur > 0) {
+        playTimer.current = window.setTimeout(() => setPlaying(false), (dur - sec) * 1000 + 150);
+      }
+    },
+    [result, currentId, feedback]
+  );
+
+  const stopPlay = useCallback(() => {
+    api.stop_playback();
+    setPlaying(false);
+    if (playTimer.current) window.clearTimeout(playTimer.current);
+  }, []);
 
   const refreshSessions = useCallback(() => {
     api.list_sessions().then(setSessions);
@@ -78,6 +103,8 @@ export default function App() {
 
   const onRecordToggle = useCallback(async () => {
     if (!recording) {
+      stopPlay();
+      setPlayhead(0);
       await api.start_recording(inputIdx);
       setRecording(true);
       setStatus("● 녹음 중입니다. 발성하세요.");
@@ -89,23 +116,29 @@ export default function App() {
       const res = await api.stop_recording();
       setResult(res);
       setCurrentId(res.session_id ?? null);
+      setPlayhead(0);
       refreshSessions();
       if (feedback) {
-        await api.play(true);
+        if (res.session_id) api.play_session(res.session_id, true, 0);
+        else api.play(true, 0);
+        setPlaying(true);
         setStatus(`녹음 완료 (${res.duration.toFixed(1)}s). 🔁 반복 재생 중 — ■ 로 멈춤`);
       } else {
-        setStatus(`녹음 완료 (${res.duration.toFixed(1)}s). ▶ 재생으로 들어보세요.`);
+        setPlaying(false);
+        setStatus(`녹음 완료 (${res.duration.toFixed(1)}s). 파형을 클릭하거나 ▶로 재생하세요.`);
       }
     }
-  }, [recording, inputIdx, feedback, pollLevel, refreshSessions]);
+  }, [recording, inputIdx, feedback, pollLevel, refreshSessions, stopPlay]);
 
   // 세션 핸들러
   const loadSession = async (id: string) => {
     const res = await api.get_session(id);
     if (res) {
+      stopPlay();
       setResult(res);
       setCurrentId(id);
-      setStatus("기록 불러옴 — ▶ 또는 기록의 재생 버튼으로 들어보세요.");
+      setPlayhead(0);
+      setStatus("기록 불러옴 — 파형을 클릭하거나 ▶로 재생하세요.");
     }
   };
   const deleteSession = async (id: string) => {
@@ -156,7 +189,14 @@ export default function App() {
             className="h-[36%]"
             bodyClassName="p-2"
           >
-            <Waveform data={result?.waveform ?? []} />
+            <Waveform
+              data={result?.waveform ?? []}
+              duration={result?.duration ?? 0}
+              startSec={playhead}
+              playing={playing}
+              loop={feedback}
+              onSeek={playFrom}
+            />
           </Panel>
           <VizTabs spectrogram={result?.spectrogram ?? []} />
         </div>
@@ -182,8 +222,8 @@ export default function App() {
         level={level}
         elapsed={elapsed}
         onRecordToggle={onRecordToggle}
-        onPlay={() => api.play(feedback)}
-        onStop={() => api.stop_playback()}
+        onPlay={() => playFrom(playhead)}
+        onStop={stopPlay}
         onFeedbackChange={setFeedback}
       />
     </div>

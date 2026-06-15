@@ -108,3 +108,14 @@ def test_play_callback_feeds_recent_buffer(fake_sd):
     cb(out, 512, None, None)
     assert eng.recent_samples().size >= 512
     assert np.allclose(out, 0.5)
+
+
+def test_play_start_frame_seeks(fake_sd):
+    """start_frame부터 재생되어야 한다(DAW식 시킹)."""
+    eng = AudioEngine()
+    eng.last_recording = np.arange(1000, dtype="float32").reshape(-1, 1)
+    eng.play(start_frame=100)
+    cb = fake_sd.streams[0].kw["callback"]
+    out = np.zeros((10, 1), dtype="float32")
+    cb(out, 10, None, None)
+    assert out[0, 0] == 100.0 and out[9, 0] == 109.0

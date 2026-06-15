@@ -145,12 +145,13 @@ class AudioEngine:
         data: np.ndarray | None = None,
         device: int | None = None,
         loop: bool = False,
+        start_frame: int = 0,
     ) -> None:
         """방금 녹음한(또는 주어진) 버퍼를 즉시 재생한다.
 
-        data가 None이면 가장 최근 녹음을 재생한다. loop=True면 stop_playback()
-        전까지 반복 재생한다. 재생되는 블록은 실시간 스펙트럼용 최근 버퍼에도 흘려보내
-        **재생 중에도 스펙트럼이 갱신**되게 한다.
+        start_frame부터 재생 시작(DAW식 시킹). data가 None이면 가장 최근 녹음.
+        loop=True면 stop_playback() 전까지 반복(끝에서 처음으로 되감음).
+        재생 블록은 실시간 스펙트럼용 최근 버퍼에도 흘려보낸다.
         """
         import sounddevice as sd
 
@@ -162,7 +163,8 @@ class AudioEngine:
         pcm = np.asarray(buf, dtype="float32")
         if pcm.ndim == 1:
             pcm = pcm.reshape(-1, 1)
-        pos = {"i": 0}
+        start = int(max(0, min(start_frame, len(pcm) - 1)))
+        pos = {"i": start}
 
         def callback(outdata, frames, time_info, status):  # noqa: ANN001
             block, pos["i"], filled, stop = self._fill_block(pcm, pos["i"], frames, loop)

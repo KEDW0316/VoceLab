@@ -165,12 +165,17 @@ class Api:
     def label_session(self, sid: str, label: str) -> bool:
         return self.store.set_label(sid, label)
 
-    def play_session(self, sid: str, loop: bool = False) -> None:
+    def play_session(self, sid: str, loop: bool = False, start: float = 0.0) -> None:
         loaded = self.store.audio(sid)
         if loaded is None:
             return
         data, _sr = loaded
-        self.engine.play(data=data, device=self._output_index, loop=bool(loop))
+        self.engine.play(
+            data=data,
+            device=self._output_index,
+            loop=bool(loop),
+            start_frame=int(start * self.engine.samplerate),
+        )
 
     def get_level(self) -> float:
         return float(self.engine.current_level)
@@ -181,8 +186,11 @@ class Api:
         return {"freqs": freqs, "db": db}
 
     # 재생
-    def play(self, loop: bool = False) -> None:
-        self.engine.play(device=self._output_index, loop=bool(loop))
+    def play(self, loop: bool = False, start: float = 0.0) -> None:
+        sr = self.engine.samplerate
+        self.engine.play(
+            device=self._output_index, loop=bool(loop), start_frame=int(start * sr)
+        )
 
     def stop_playback(self) -> None:
         self.engine.stop_playback()

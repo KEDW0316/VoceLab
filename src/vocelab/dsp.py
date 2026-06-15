@@ -82,25 +82,28 @@ def spectrum(
     fmin: float = 50.0,
     fmax: float = 8000.0,
     n_out: int = 160,
-    floor_db: float = -90.0,
+    floor_db: float = -100.0,
 ) -> tuple[list[float], list[float]]:
     """실시간 스펙트럼 분석기(EQ 곡선)용 단일 프레임 크기 스펙트럼.
 
-    최근 오디오 한 프레임의 rFFT 크기를 dB로 변환하고, 로그 주파수 축으로
-    n_out개 지점에 보간해 (freqs, db_0to-floor)를 반환한다. 최댓값을 0 dB로 정규화.
+    최근 오디오 한 프레임의 rFFT 크기를 **절대 dBFS**로 변환한다(프레임별 정규화 X).
+    풀스케일 사인(진폭 1)의 피크가 ≈0 dBFS가 되도록 기준화하므로, 잡소리는 바닥에
+    깔리고 축이 고정된다. 로그 주파수 축으로 n_out개 지점에 보간해 (freqs, db)를 반환.
     """
     mono = np.asarray(mono, dtype=np.float64)
     if mono.size < 256:
         return [], []
 
     n = min(4096, len(mono))
-    seg = mono[-n:] * np.hanning(n)
+    window = np.hanning(n)
+    seg = mono[-n:] * window
     mag = np.abs(np.fft.rfft(seg))
     freqs = np.fft.rfftfreq(n, d=1.0 / samplerate)
 
-    db = 20.0 * np.log10(mag + 1e-9)
-    db -= db.max()  # 0 dB 정규화
-    np.clip(db, floor_db, 0.0, out=db)
+    # 절대 dBFS: Hann 창에서 풀스케일 사인 피크 ≈ N/4
+    ref = n / 4.0
+    db = 20.0 * np.log10(mag / ref + 1e-12)
+    np.clip(db, floor_db, 6.0, out=db)
 
     keep = (freqs >= fmin) & (freqs <= fmax)
     if not keep.any():

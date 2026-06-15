@@ -3,19 +3,19 @@ import { Activity } from "lucide-react";
 
 interface Props {
   freqs: number[];
-  db: number[]; // 0..-90
+  db: number[]; // 절대 dBFS (≈0..-100)
   floor?: number;
 }
 
 const GRID_FREQS = [100, 1000, 10000];
-const GRID_DB = [-20, -40, -60];
+const GRID_DB = [-20, -40, -60, -80];
 
 function fmtHz(f: number) {
   return f >= 1000 ? `${f / 1000}k` : `${f}`;
 }
 
 // DAW EQ식 실시간 스펙트럼 곡선 (로그 주파수 × dB).
-export function SpectrumView({ freqs, db, floor = -90 }: Props) {
+export function SpectrumView({ freqs, db, floor = -100 }: Props) {
   const ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {

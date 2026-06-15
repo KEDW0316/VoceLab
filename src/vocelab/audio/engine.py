@@ -23,6 +23,7 @@ class AudioEngine:
         self.channels = channels
 
         self._stream = None  # sd.InputStream (녹음 중일 때만)
+        self._out_stream = None  # sd.OutputStream (재생 중일 때만)
         self._frames: list[np.ndarray] = []
         self._lock = threading.Lock()
         self._level = 0.0
@@ -67,7 +68,7 @@ class AudioEngine:
 
         import sounddevice as sd
 
-        sd.stop()  # 재생(특히 loop) 중이면 멈추고 녹음 시작
+        self.stop_playback()  # 재생(특히 loop) 중이면 멈추고 녹음 시작
         ch = channels or self.channels
         self._frames = []
         self._recent = np.zeros(0, dtype="float32")
@@ -115,6 +116,30 @@ class AudioEngine:
         return data
 
     # ---- 재생 ---------------------------------------------------------------
+    @staticmethod
+    def _fill_block(
+        data: np.ndarray, start: int, frames: int, loop: bool
+    ) -> tuple[np.ndarray, int, int, bool]:
+        """재생 콜백용 블록 채우기. (block, next_pos, filled, stop)를 반환.
+
+        loop면 끝에서 처음으로 되감고, 아니면 데이터 소진 시 stop=True.
+        """
+        n = len(data)
+        ch = data.shape[1]
+        out = np.zeros((frames, ch), dtype="float32")
+        i, filled = start, 0
+        while filled < frames:
+            if i >= n:
+                if loop:
+                    i = 0
+                else:
+                    break
+            take = min(frames - filled, n - i)
+            out[filled : filled + take] = data[i : i + take]
+            i += take
+            filled += take
+        return out, i, filled, (filled < frames and not loop)
+
     def play(
         self,
         data: np.ndarray | None = None,
@@ -123,19 +148,52 @@ class AudioEngine:
     ) -> None:
         """방금 녹음한(또는 주어진) 버퍼를 즉시 재생한다.
 
-        data가 None이면 가장 최근 녹음을 재생한다.
-        loop=True면 stop_playback() 전까지 반복 재생한다(귀 훈련용).
+        data가 None이면 가장 최근 녹음을 재생한다. loop=True면 stop_playback()
+        전까지 반복 재생한다. 재생되는 블록은 실시간 스펙트럼용 최근 버퍼에도 흘려보내
+        **재생 중에도 스펙트럼이 갱신**되게 한다.
         """
         import sounddevice as sd
 
         buf = self.last_recording if data is None else data
         if buf is None or len(buf) == 0:
             return
-        sd.play(buf, samplerate=self.samplerate, device=device, loop=loop)
+
+        self.stop_playback()
+        pcm = np.asarray(buf, dtype="float32")
+        if pcm.ndim == 1:
+            pcm = pcm.reshape(-1, 1)
+        pos = {"i": 0}
+
+        def callback(outdata, frames, time_info, status):  # noqa: ANN001
+            block, pos["i"], filled, stop = self._fill_block(pcm, pos["i"], frames, loop)
+            outdata[:] = block
+            with self._lock:
+                self._push_recent(block[:filled, 0])
+            if stop:
+                raise sd.CallbackStop
+
+        self._out_stream = sd.OutputStream(
+            samplerate=self.samplerate,
+            channels=pcm.shape[1],
+            device=device,
+            callback=callback,
+            finished_callback=self._on_playback_finished,
+        )
+        self._out_stream.start()
+
+    def _on_playback_finished(self) -> None:
+        self._out_stream = None
 
     def stop_playback(self) -> None:
         import sounddevice as sd
 
+        if self._out_stream is not None:
+            try:
+                self._out_stream.stop()
+                self._out_stream.close()
+            except Exception:  # noqa: BLE001
+                pass
+            self._out_stream = None
         sd.stop()
 
     # ---- 저장 ---------------------------------------------------------------

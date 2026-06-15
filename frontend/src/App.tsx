@@ -146,7 +146,7 @@ export default function App() {
           >
             <Waveform data={result?.waveform ?? []} />
           </Panel>
-          <VizTabs spectrogram={result?.spectrogram ?? []} recording={recording} />
+          <VizTabs spectrogram={result?.spectrogram ?? []} />
         </div>
         <MetricsPanel metrics={result?.metrics ?? []} baseline={baseline} />
       </div>

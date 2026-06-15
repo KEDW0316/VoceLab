@@ -8,11 +8,10 @@ type Tab = "spectrogram" | "spectrum";
 
 interface Props {
   spectrogram: number[][];
-  recording: boolean;
 }
 
 // 스펙트로그램 / 실시간 스펙트럼(EQ) 탭 + 프리즈(멈춤).
-export function VizTabs({ spectrogram, recording }: Props) {
+export function VizTabs({ spectrogram }: Props) {
   const [tab, setTab] = useState<Tab>("spectrogram");
   const [frozen, setFrozen] = useState(false);
   const [spec, setSpec] = useState<{ freqs: number[]; db: number[] }>({ freqs: [], db: [] });
@@ -80,12 +79,6 @@ export function VizTabs({ spectrogram, recording }: Props) {
           </span>
         )}
       </div>
-      {/* recording은 폴링 의미상 참고용(스트림은 녹음 중에만 들어옴) */}
-      {tab === "spectrum" && !recording && !frozen && spec.freqs.length > 1 && (
-        <div className="border-t border-border px-3 py-1 text-[10px] text-muted-foreground">
-          녹음 중이 아닙니다 — 마지막 곡선 표시 중. 녹음하면 실시간으로 갱신됩니다.
-        </div>
-      )}
     </div>
   );
 }

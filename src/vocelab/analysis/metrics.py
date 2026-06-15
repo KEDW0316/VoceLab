@@ -25,6 +25,7 @@ class Metric:
     unit: str
     description: str
     normal: str = ""  # 정상/참고 범위 안내 (선택)
+    category: str = "기타"  # 패널 그룹핑용
 
     @property
     def display(self) -> str:
@@ -86,7 +87,9 @@ def analyze(samples: np.ndarray, samplerate: int) -> VoiceMetrics:
     metrics: list[Metric] = []
 
     def add(key, label, value, unit, desc, normal=""):
-        metrics.append(Metric(key, label, _clean(value), unit, desc, normal))
+        metrics.append(
+            Metric(key, label, _clean(value), unit, desc, normal, _CATEGORIES.get(key, "기타"))
+        )
 
     # 신호가 너무 짧으면 분석 불가 — 전부 None
     if mono.size < samplerate * 0.05:  # 50ms 미만
@@ -168,7 +171,83 @@ def analyze(samples: np.ndarray, samplerate: int) -> VoiceMetrics:
         normal="보통 < 3.8%",
     )
 
+    # --- 포먼트 (F1~F3) ------------------------------------------------------
+    f1 = f2 = f3 = None
+    try:
+        fm = call(snd, "To Formant (burg)", 0.0, 5, 5500, 0.025, 50)
+        f1 = call(fm, "Get mean", 1, 0, 0, "Hertz")
+        f2 = call(fm, "Get mean", 2, 0, 0, "Hertz")
+        f3 = call(fm, "Get mean", 3, 0, 0, "Hertz")
+    except Exception:  # noqa: BLE001
+        pass
+    add("f1", "F1", f1, "Hz", "제1 포먼트. 모음의 개구도(입 벌림)와 관련.")
+    add("f2", "F2", f2, "Hz", "제2 포먼트. 혀의 전후 위치(모음 색)와 관련.")
+    add("f3", "F3", f3, "Hz", "제3 포먼트. 음색/공명에 기여.")
+
+    # --- 공명·음색 (스펙트럼 밴드 측정) --------------------------------------
+    from vocelab.dsp import alpha_ratio, hammarberg_index, ltas, singing_power_ratio
+
+    try:
+        freqs, power = ltas(mono, samplerate)
+        add(
+            "alpha", "Alpha ratio", alpha_ratio(freqs, power), "dB",
+            "고역(1–5kHz) 대 저역(50Hz–1kHz) 에너지 비. 높을수록(덜 음수) 밝고 "
+            "에너지 있는 음색.",
+        )
+        add(
+            "hammarberg", "Hammarberg", hammarberg_index(freqs, power), "dB",
+            "0–2kHz 최대 − 2–5kHz 최대. 작을수록 고역 공명이 풍부.",
+        )
+        add(
+            "spr", "SPR", singing_power_ratio(freqs, power), "dB",
+            "Singing Power Ratio. 낮을수록 2–4kHz의 Singer's Formant(성악적 '링') 강함.",
+            normal="성악 발성에서 낮을수록 유리",
+        )
+    except Exception:  # noqa: BLE001
+        add("alpha", "Alpha ratio", None, "dB", "고역 대 저역 에너지 비.")
+        add("hammarberg", "Hammarberg", None, "dB", "저역 대 고역 피크 차.")
+        add("spr", "SPR", None, "dB", "Singing Power Ratio.")
+
+    # --- 비브라토 (F0 컨투어 기반) -------------------------------------------
+    from vocelab.dsp import vibrato_from_contour
+
+    v_rate = v_extent = None
+    if pitch is not None:
+        try:
+            contour = pitch.selected_array["frequency"]
+            v_rate, v_extent = vibrato_from_contour(contour, pitch.dt)
+        except Exception:  # noqa: BLE001
+            pass
+    add(
+        "vibrato_rate", "비브라토 rate", v_rate, "Hz",
+        "비브라토의 주기. 노래에서 보통 4–7 Hz가 자연스럽다고 알려짐.",
+        normal="대략 4–7 Hz",
+    )
+    add(
+        "vibrato_extent", "비브라토 extent", v_extent, "반음",
+        "비브라토의 폭(peak-to-peak). 보통 0.5–2 반음.",
+        normal="대략 0.5–2 반음",
+    )
+
     return VoiceMetrics(metrics)
+
+
+_CATEGORIES = {
+    "cpps": "음질",
+    "hnr": "음질",
+    "jitter": "음질",
+    "shimmer": "음질",
+    "f0_mean": "음높이",
+    "f0_sd": "음높이",
+    "f1": "공명·음색",
+    "f2": "공명·음색",
+    "f3": "공명·음색",
+    "alpha": "공명·음색",
+    "hammarberg": "공명·음색",
+    "spr": "공명·음색",
+    "vibrato_rate": "비브라토",
+    "vibrato_extent": "비브라토",
+}
 
 
 # 짧은 신호 등으로 조기 반환할 때 사용할 지표 메타(순서/설명 일관성 유지)
@@ -180,4 +259,12 @@ _METRIC_SPEC = [
     ("f0_sd", "F0 표준편차", "Hz", "음높이의 흔들림 정도.", ""),
     ("jitter", "Jitter (local)", "%", "주기 간 주파수 섭동.", "보통 < 1%"),
     ("shimmer", "Shimmer (local)", "%", "주기 간 진폭 섭동.", "보통 < 3.8%"),
+    ("f1", "F1", "Hz", "제1 포먼트.", ""),
+    ("f2", "F2", "Hz", "제2 포먼트.", ""),
+    ("f3", "F3", "Hz", "제3 포먼트.", ""),
+    ("alpha", "Alpha ratio", "dB", "고역 대 저역 에너지 비.", ""),
+    ("hammarberg", "Hammarberg", "dB", "저역 대 고역 피크 차.", ""),
+    ("spr", "SPR", "dB", "Singing Power Ratio.", ""),
+    ("vibrato_rate", "비브라토 rate", "Hz", "비브라토 주기.", "대략 4–7 Hz"),
+    ("vibrato_extent", "비브라토 extent", "반음", "비브라토 폭.", "대략 0.5–2 반음"),
 ]

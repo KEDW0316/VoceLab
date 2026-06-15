@@ -56,3 +56,27 @@ def test_short_signal_returns_none_values():
     # 메타데이터(라벨/단위)는 유지
     assert vm.get("cpps").label == "CPPS"
     assert vm.get("cpps").display == "—"
+
+
+def test_includes_m3_metrics_with_categories():
+    vm = analyze(_vowel(noise=0.0), SR)
+    # 포먼트·공명·비브라토 지표가 추가됨
+    for key in ("f1", "f2", "f3", "alpha", "hammarberg", "spr",
+                "vibrato_rate", "vibrato_extent"):
+        assert vm.get(key) is not None, f"missing {key}"
+    assert vm.get("cpps").category == "음질"
+    assert vm.get("f1").category == "공명·음색"
+    assert vm.get("vibrato_rate").category == "비브라토"
+
+
+def test_formants_are_positive():
+    vm = analyze(_vowel(f0=150.0), SR)
+    f1 = vm.get("f1").value
+    assert f1 is not None and f1 > 0
+
+
+def test_short_signal_metric_count_matches_full():
+    """짧은 신호도 전체와 동일한 지표 집합을 반환해야 한다(일관성)."""
+    full = analyze(_vowel(noise=0.0), SR)
+    short = analyze(np.random.randn(441).astype("float32"), SR)
+    assert {m.key for m in full.metrics} == {m.key for m in short.metrics}

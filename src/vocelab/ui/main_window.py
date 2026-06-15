@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
 from vocelab.analysis import analyze
 from vocelab.audio import AudioEngine, input_devices, output_devices
 from vocelab.ui.widgets.metrics_panel import MetricsPanel
+from vocelab.ui.widgets.scale_practice import ScalePracticeWidget
 from vocelab.ui.widgets.spectrogram import SpectrogramWidget
 from vocelab.ui.widgets.waveform import WaveformWidget
 
@@ -79,6 +80,11 @@ class MainWindow(QMainWindow):
         splitter.setStretchFactor(0, 3)
         splitter.setStretchFactor(1, 1)
         root.addWidget(splitter, stretch=1)
+
+        # 스케일 연습 (가이드 톤 + 트랜스포즈)
+        self.scale_practice = ScalePracticeWidget(self._play_guide_tone)
+        self.scale_practice.samplerate = self.engine.samplerate
+        root.addWidget(self.scale_practice)
 
         # 입력 레벨미터
         level_row = QHBoxLayout()
@@ -209,6 +215,18 @@ class MainWindow(QMainWindow):
             self.status.setText("🔁 반복 재생 중 — ■ 정지로 멈춤" if loop else "재생 중…")
         except Exception as exc:  # noqa: BLE001
             self.status.setText(f"재생 실패: {exc}")
+
+    def _play_guide_tone(self, buf) -> None:
+        """스케일 가이드 톤을 출력 장치로 재생(반복 없음)."""
+        try:
+            self.engine.play(data=buf, device=self._output_index, loop=False)
+            s = self.scale_practice.current_scale
+            self.status.setText(
+                f"가이드 톤 재생: {s.name} (키 {self.scale_practice.tonic_combo.currentText()})"
+                f" — '{s.syllable}'로 따라 부르세요"
+            )
+        except Exception as exc:  # noqa: BLE001
+            self.status.setText(f"가이드 톤 재생 실패: {exc}")
 
     def _update_level(self) -> None:
         rms = self.engine.current_level

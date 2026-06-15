@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
 )
 
 from vocelab.analysis import VoiceMetrics
+from vocelab.analysis.references import reference_for
 
 
 class MetricsPanel(QWidget):
@@ -67,12 +68,14 @@ class MetricsPanel(QWidget):
                 self._box.addWidget(header)
                 self._widgets.append(header)
 
-            card = self._make_card(m.label, m.display, m.unit, m.description, m.normal)
+            card = self._make_card(
+                m.label, m.display, m.unit, m.description, m.normal, reference_for(m.key)
+            )
             self._box.addWidget(card)
             self._widgets.append(card)
 
     @staticmethod
-    def _make_card(label, value, unit, desc, normal) -> QWidget:
+    def _make_card(label, value, unit, desc, normal, reference=None) -> QWidget:
         frame = QFrame()
         frame.setFrameShape(QFrame.StyledPanel)
         frame.setStyleSheet(
@@ -101,5 +104,16 @@ class MetricsPanel(QWidget):
         box.addLayout(val_row)
 
         tip = desc + (f"\n\n정상/참고: {normal}" if normal else "")
+
+        # 출처 링크: 클릭하면 브라우저로 논문을 연다 (요약은 툴팁으로)
+        if reference is not None:
+            link = QLabel(f'📄 <a href="{reference.url}" style="color:#6a9955;">출처</a>')
+            link.setOpenExternalLinks(True)
+            link.setTextInteractionFlags(Qt.TextBrowserInteraction)
+            link.setStyleSheet("font-size: 11px;")
+            link.setToolTip(f"{reference.title}\n\n{reference.summary}")
+            val_row.addWidget(link)
+            tip += f"\n\n출처: {reference.title} — {reference.citation}"
+
         frame.setToolTip(tip)
         return frame

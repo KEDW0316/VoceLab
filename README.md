@@ -14,7 +14,18 @@
 - ✅ CPPS·HNR·F0·지터·쉬머 (Praat 기반)
 - ✅ 포먼트(F1–F3)·Alpha ratio·Hammarberg·SPR(Singer's Formant)·비브라토 rate/extent
 - ✅ 카테고리별(음질/음높이/공명·음색/비브라토) 지표 패널
+- ✅ 각 지표 카드의 **📄 출처** 링크 → 근거 논문(DOI/PubMed) 열기. 요약은 툴팁
 - ⏳ 세션 저장·전후 비교, VRP (M4~)
+
+### 지표 출처
+
+각 지표의 근거 논문·요약은 [`docs/REFERENCES.md`](./docs/REFERENCES.md)에 정리되어 있고,
+앱의 각 지표 카드 **📄 출처** 링크가 이 1차 출처로 연결된다. 출처 데이터의 단일 출처는
+`src/vocelab/analysis/references.py`이며, 문서는 아래로 재생성한다(테스트가 동기화 검증):
+
+```bash
+PYTHONPATH=src python tools/gen_references.py
+```
 
 ## 설치 & 실행
 

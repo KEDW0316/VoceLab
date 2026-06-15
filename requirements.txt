@@ -1,0 +1,15 @@
+# 오디오 I/O (오디오 인터페이스, 저지연 녹음/재생)
+sounddevice>=0.4.6
+soundfile>=0.12.1
+
+# 수치 처리
+numpy>=1.24
+scipy>=1.10
+
+# UI
+PySide6>=6.6
+pyqtgraph>=0.13
+
+# 음향 분석 (M2+에서 사용)
+praat-parselmouth>=0.4.3
+librosa>=0.10

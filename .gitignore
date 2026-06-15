@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+*.spec
+
+# Virtual envs
+.venv/
+venv/
+env/
+
+# 녹음 데이터/세션
+recordings/
+sessions/
+*.wav
+*.flac
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store

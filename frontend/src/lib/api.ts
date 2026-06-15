@@ -50,6 +50,32 @@ const mockApi: PyApi = {
 export const isBackendReady = () =>
   typeof window !== "undefined" && !!window.pywebview?.api;
 
+// pywebview는 'pywebviewready' 시점에 api를 주입한다. 마운트 즉시 판단하면
+// 백엔드가 있는데도 목 데이터를 깔게 되므로, 준비를 기다린 뒤 한 번만 확정한다.
+let _readyPromise: Promise<boolean> | null = null;
+export function whenBackendReady(timeoutMs = 2000): Promise<boolean> {
+  if (_readyPromise) return _readyPromise;
+  _readyPromise = new Promise<boolean>((resolve) => {
+    if (isBackendReady()) return resolve(true);
+    let done = false;
+    const finish = (v: boolean) => {
+      if (done) return;
+      done = true;
+      window.clearInterval(poll);
+      window.removeEventListener("pywebviewready", onReady);
+      resolve(v);
+    };
+    const onReady = () => finish(true);
+    window.addEventListener("pywebviewready", onReady, { once: true });
+    const start = Date.now();
+    const poll = window.setInterval(() => {
+      if (isBackendReady()) finish(true);
+      else if (Date.now() - start > timeoutMs) finish(false); // 진짜 브라우저 → 데모
+    }, 100);
+  });
+  return _readyPromise;
+}
+
 export const api: PyApi = new Proxy({} as PyApi, {
   get(_t, prop: string) {
     const real = window.pywebview?.api as PyApi | undefined;

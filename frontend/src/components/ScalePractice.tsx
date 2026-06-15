@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { ChevronDown, ChevronUp, Music2, Play } from "lucide-react";
 import type { Scale } from "@/lib/types";
-import { api } from "@/lib/api";
+import { api, whenBackendReady } from "@/lib/api";
+import { loadPref, savePref } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 
@@ -13,15 +14,27 @@ const TONICS = [3, 4, 5].flatMap((o) =>
 export function ScalePractice() {
   const [scales, setScales] = useState<Scale[]>([]);
   const [scaleKey, setScaleKey] = useState("");
-  const [tonic, setTonic] = useState("C4");
+  const [tonic, setTonic] = useState(() => loadPref("tonic") || "C4");
   const [solfege, setSolfege] = useState("");
 
   useEffect(() => {
-    api.list_scales().then((s) => {
-      setScales(s);
-      if (s.length) setScaleKey(s[0].key);
-    });
+    whenBackendReady().then(() =>
+      api.list_scales().then((s) => {
+        setScales(s);
+        if (s.length) {
+          const saved = loadPref("scale");
+          setScaleKey(s.some((x) => x.key === saved) ? saved! : s[0].key);
+        }
+      })
+    );
   }, []);
+
+  useEffect(() => {
+    if (scaleKey) savePref("scale", scaleKey);
+  }, [scaleKey]);
+  useEffect(() => {
+    savePref("tonic", tonic);
+  }, [tonic]);
 
   const scale = scales.find((s) => s.key === scaleKey);
 

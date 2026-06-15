@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AudioLines } from "lucide-react";
 import type { AnalysisResult, SessionSummary } from "@/lib/types";
-import { api, isBackendReady } from "@/lib/api";
+import { api, whenBackendReady } from "@/lib/api";
 import { mockAnalysis } from "@/lib/mock";
+import { loadPref, savePref } from "@/lib/storage";
 import { Panel } from "@/components/ui/panel";
 import { Header } from "@/components/Header";
 import { DeviceBar } from "@/components/DeviceBar";
@@ -21,7 +22,7 @@ export default function App() {
   const [inputIdx, setInputIdx] = useState<number | null>(null);
   const [outputIdx, setOutputIdx] = useState<number | null>(null);
   const [recording, setRecording] = useState(false);
-  const [feedback, setFeedback] = useState(false);
+  const [feedback, setFeedback] = useState(() => loadPref("feedback") === "1");
   const [level, setLevel] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -36,19 +37,30 @@ export default function App() {
   const refreshSessions = useCallback(() => {
     api.list_sessions().then(setSessions);
   }, []);
-  useEffect(refreshSessions, [refreshSessions]);
+
+  // 피드백 모드 기억
+  useEffect(() => {
+    savePref("feedback", feedback ? "1" : "0");
+  }, [feedback]);
 
   useEffect(() => {
     api.set_output_device(outputIdx);
   }, [outputIdx]);
 
-  // 백엔드 미연결(브라우저/데모): 주입 시드 또는 목 데이터로 미리 채운다.
+  // 백엔드(pywebview) 준비를 기다린 뒤 한 번만 판단한다.
+  // 실제 백엔드면 빈 화면에서 시작(데모 데이터 X), 진짜 브라우저면 데모/시드 표시.
   useEffect(() => {
-    if (isBackendReady()) return;
-    const seed = (window as unknown as { __VOCELAB_SEED__?: AnalysisResult }).__VOCELAB_SEED__;
-    setResult(seed ?? mockAnalysis);
-    setStatus(seed ? `녹음 완료 (${seed.duration.toFixed(1)}s) — 실 분석 데이터` : "데모 모드 — 목 데이터");
-  }, []);
+    whenBackendReady().then((real) => {
+      refreshSessions();
+      if (real) {
+        setStatus("준비됨 — 오디오 인터페이스를 선택하고 녹음을 시작하세요.");
+        return;
+      }
+      const seed = (window as unknown as { __VOCELAB_SEED__?: AnalysisResult }).__VOCELAB_SEED__;
+      setResult(seed ?? mockAnalysis);
+      setStatus(seed ? `녹음 완료 (${seed.duration.toFixed(1)}s) — 실 분석 데이터` : "데모 모드 — 목 데이터 (백엔드 미연결)");
+    });
+  }, [refreshSessions]);
 
   const pollLevel = useCallback(() => {
     levelTimer.current = window.setInterval(async () => setLevel(await api.get_level()), 60);

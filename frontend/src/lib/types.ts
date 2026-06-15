@@ -19,6 +19,8 @@ export interface Metric {
   description: string;
   normal: string;
   category: string;
+  status: "good" | "watch" | "poor" | "info";
+  note: string;
   reference: Reference | null;
 }
 

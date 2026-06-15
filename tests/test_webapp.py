@@ -50,6 +50,9 @@ def test_metrics_payload_includes_reference_and_is_serializable():
     cpps = next(m for m in payload if m["key"] == "cpps")
     assert cpps["reference"] is not None
     assert cpps["reference"]["url"].startswith("http")
+    # 해석(rating) 필드 포함
+    assert cpps["status"] in {"good", "watch", "poor", "info"}
+    assert "note" in cpps
     # 전체가 JSON 직렬화 가능해야 함 (pywebview 브리지 요구사항)
     json.dumps(payload)
 

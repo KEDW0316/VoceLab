@@ -23,19 +23,20 @@ export const mockScales: Scale[] = [
 function mk(
   key: string, label: string, value: number | null, unit: string,
   category: string, description: string, normal = "",
+  status: Metric["status"] = "info", note = "",
 ): Metric {
   return {
-    key, label, value, unit, category, description, normal,
+    key, label, value, unit, category, description, normal, status, note,
     display: value === null ? "—" : value.toFixed(2),
     reference: { title: `${label} 출처`, citation: "", url: "https://doi.org/10.0000/example", summary: description },
   };
 }
 
 export const mockMetrics: Metric[] = [
-  mk("cpps", "CPPS", 8.91, "dB", "음질", "켑스트럼 피크 두드러짐 — 높을수록 또렷한 발성.", "≥ 4 dB 권장"),
-  mk("hnr", "HNR", 23.4, "dB", "음질", "배음 대비 잡음 비. 높을수록 깨끗.", "≥ 20 dB"),
-  mk("jitter", "Jitter", 0.31, "%", "음질", "주기 간 주파수 섭동.", "< 1%"),
-  mk("shimmer", "Shimmer", 3.12, "%", "음질", "주기 간 진폭 섭동.", "< 3.8%"),
+  mk("cpps", "CPPS", 8.91, "dB", "음질", "켑스트럼 피크 두드러짐 — 높을수록 또렷한 발성.", "≥ 4 dB 권장", "good", "또렷하고 안정적인 발성"),
+  mk("hnr", "HNR", 23.4, "dB", "음질", "배음 대비 잡음 비. 높을수록 깨끗.", "≥ 20 dB", "good", "깨끗한 발성(잡음 적음)"),
+  mk("jitter", "Jitter", 1.31, "%", "음질", "주기 간 주파수 섭동.", "< 1%", "watch", "약간 불안정"),
+  mk("shimmer", "Shimmer", 3.12, "%", "음질", "주기 간 진폭 섭동.", "< 3.8%", "good", "음량(진폭) 안정적"),
   mk("f0_mean", "평균 F0", 220.5, "Hz", "음높이", "기본 주파수의 평균."),
   mk("f0_sd", "F0 표준편차", 7.4, "Hz", "음높이", "음높이의 흔들림."),
   mk("f1", "F1", 551.9, "Hz", "공명·음색", "제1 포먼트 — 개구도."),
@@ -44,8 +45,8 @@ export const mockMetrics: Metric[] = [
   mk("alpha", "Alpha ratio", -11.3, "dB", "공명·음색", "고역 대 저역 에너지 비."),
   mk("hammarberg", "Hammarberg", 10.6, "dB", "공명·음색", "저역 대 고역 피크 차."),
   mk("spr", "SPR", 9.4, "dB", "공명·음색", "Singer's Formant 지표."),
-  mk("vibrato_rate", "비브라토 rate", 5.5, "Hz", "비브라토", "비브라토 주기.", "4–7 Hz"),
-  mk("vibrato_extent", "비브라토 extent", 1.18, "반음", "비브라토", "비브라토 폭.", "0.5–2 반음"),
+  mk("vibrato_rate", "비브라토 rate", 5.5, "Hz", "비브라토", "비브라토 주기.", "4–7 Hz", "good", "자연스러운 비브라토 주기"),
+  mk("vibrato_extent", "비브라토 extent", 1.18, "반음", "비브라토", "비브라토 폭.", "0.5–2 반음", "good", "적당한 비브라토 폭"),
 ];
 
 export function mockWaveform(n = 600): number[] {

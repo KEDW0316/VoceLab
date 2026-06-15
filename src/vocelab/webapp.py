@@ -15,6 +15,7 @@ import numpy as np
 
 from vocelab.analysis import analyze
 from vocelab.analysis.metrics import VoiceMetrics, to_mono_f64
+from vocelab.analysis.rating import rate
 from vocelab.analysis.references import reference_for
 from vocelab.audio import AudioEngine, input_devices, output_devices
 from vocelab.dsp import spectrogram_db
@@ -28,6 +29,7 @@ def metrics_payload(metrics: VoiceMetrics) -> list[dict]:
     out = []
     for m in metrics.metrics:
         ref = reference_for(m.key)
+        status, note = rate(m.key, m.value)
         out.append(
             {
                 "key": m.key,
@@ -38,6 +40,8 @@ def metrics_payload(metrics: VoiceMetrics) -> list[dict]:
                 "description": m.description,
                 "normal": m.normal,
                 "category": m.category,
+                "status": status,
+                "note": note,
                 "reference": (
                     None
                     if ref is None

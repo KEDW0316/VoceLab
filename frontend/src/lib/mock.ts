@@ -87,6 +87,27 @@ export function mockSpectrogram(freqBins = 96, timeBins = 200): number[][] {
   return m;
 }
 
+// 실시간 스펙트럼(EQ 곡선) 목 — 로그 주파수 + 포먼트형 피크 + 롤오프
+export function mockSpectrum(n = 160): { freqs: number[]; db: number[] } {
+  const fmin = 50, fmax = 8000;
+  const freqs: number[] = [];
+  const db: number[] = [];
+  const peaks = [
+    [220, 0], [620, -6], [1100, -10], [2900, -14], // F0 + 포먼트 + 링
+  ];
+  for (let i = 0; i < n; i++) {
+    const f = fmin * Math.pow(fmax / fmin, i / (n - 1));
+    let v = -60 - 6 * Math.log2(f / 200); // 전체 롤오프
+    for (const [pf, pgain] of peaks) {
+      v = Math.max(v, pgain - 0.0009 * Math.pow(f - pf, 2) / (pf / 200));
+    }
+    v += (Math.random() - 0.5) * 3;
+    freqs.push(Math.round(f));
+    db.push(Math.max(-90, Math.min(0, Math.round(v * 10) / 10)));
+  }
+  return { freqs, db };
+}
+
 export const mockAnalysis: AnalysisResult = {
   duration: 1.6,
   waveform: mockWaveform(),

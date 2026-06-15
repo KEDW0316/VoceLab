@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AudioLines, Waves } from "lucide-react";
+import { AudioLines } from "lucide-react";
 import type { AnalysisResult, SessionSummary } from "@/lib/types";
 import { api, isBackendReady } from "@/lib/api";
 import { mockAnalysis } from "@/lib/mock";
@@ -7,7 +7,7 @@ import { Panel } from "@/components/ui/panel";
 import { Header } from "@/components/Header";
 import { DeviceBar } from "@/components/DeviceBar";
 import { Waveform } from "@/components/Waveform";
-import { Spectrogram } from "@/components/Spectrogram";
+import { VizTabs } from "@/components/VizTabs";
 import { MetricsPanel } from "@/components/MetricsPanel";
 import { ScalePractice } from "@/components/ScalePractice";
 import { SessionBar } from "@/components/SessionBar";
@@ -146,14 +146,7 @@ export default function App() {
           >
             <Waveform data={result?.waveform ?? []} />
           </Panel>
-          <Panel
-            title="스펙트로그램"
-            icon={<Waves className="h-3.5 w-3.5" />}
-            right="0–5 kHz"
-            className="min-h-0 flex-1"
-          >
-            <Spectrogram data={result?.spectrogram ?? []} />
-          </Panel>
+          <VizTabs spectrogram={result?.spectrogram ?? []} recording={recording} />
         </div>
         <MetricsPanel metrics={result?.metrics ?? []} baseline={baseline} />
       </div>

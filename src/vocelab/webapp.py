@@ -18,7 +18,7 @@ from vocelab.analysis.metrics import VoiceMetrics, to_mono_f64
 from vocelab.analysis.rating import direction, rate
 from vocelab.analysis.references import reference_for
 from vocelab.audio import AudioEngine, input_devices, output_devices
-from vocelab.dsp import spectrogram_db
+from vocelab.dsp import spectrogram_db, spectrum
 from vocelab.scales import SCALES, get_scale
 from vocelab.sessions import SessionStore
 from vocelab.synth import note_name_to_freq, solfege, synthesize
@@ -174,6 +174,11 @@ class Api:
 
     def get_level(self) -> float:
         return float(self.engine.current_level)
+
+    def get_spectrum(self) -> dict:
+        """실시간 스펙트럼(EQ 곡선)용 최근 프레임 스펙트럼."""
+        freqs, db = spectrum(self.engine.recent_samples(), self.engine.samplerate)
+        return {"freqs": freqs, "db": db}
 
     # 재생
     def play(self, loop: bool = False) -> None:

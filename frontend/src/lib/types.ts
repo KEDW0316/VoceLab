@@ -57,6 +57,7 @@ export interface PyApi {
   start_recording(inputIndex: number | null): Promise<void>;
   stop_recording(): Promise<AnalysisResult>;
   get_level(): Promise<number>;
+  get_spectrum(): Promise<{ freqs: number[]; db: number[] }>;
   play(loop: boolean): Promise<void>;
   stop_playback(): Promise<void>;
   list_scales(): Promise<Scale[]>;

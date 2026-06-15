@@ -75,6 +75,43 @@ def spectrogram_db(
     return times, freqs, db
 
 
+def spectrum(
+    mono: np.ndarray,
+    samplerate: int,
+    *,
+    fmin: float = 50.0,
+    fmax: float = 8000.0,
+    n_out: int = 160,
+    floor_db: float = -90.0,
+) -> tuple[list[float], list[float]]:
+    """실시간 스펙트럼 분석기(EQ 곡선)용 단일 프레임 크기 스펙트럼.
+
+    최근 오디오 한 프레임의 rFFT 크기를 dB로 변환하고, 로그 주파수 축으로
+    n_out개 지점에 보간해 (freqs, db_0to-floor)를 반환한다. 최댓값을 0 dB로 정규화.
+    """
+    mono = np.asarray(mono, dtype=np.float64)
+    if mono.size < 256:
+        return [], []
+
+    n = min(4096, len(mono))
+    seg = mono[-n:] * np.hanning(n)
+    mag = np.abs(np.fft.rfft(seg))
+    freqs = np.fft.rfftfreq(n, d=1.0 / samplerate)
+
+    db = 20.0 * np.log10(mag + 1e-9)
+    db -= db.max()  # 0 dB 정규화
+    np.clip(db, floor_db, 0.0, out=db)
+
+    keep = (freqs >= fmin) & (freqs <= fmax)
+    if not keep.any():
+        return [], []
+    f, d = freqs[keep], db[keep]
+
+    target = np.logspace(np.log10(fmin), np.log10(min(fmax, f[-1])), n_out)
+    interp = np.interp(target, f, d)
+    return [round(float(x), 1) for x in target], [round(float(y), 1) for y in interp]
+
+
 # --- 장기 평균 스펙트럼(LTAS) 기반 밴드 측정 --------------------------------
 
 

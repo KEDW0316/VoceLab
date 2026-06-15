@@ -27,6 +27,10 @@ class AudioEngine:
         self._lock = threading.Lock()
         self._level = 0.0
 
+        # 실시간 스펙트럼용 최근 모노 샘플 링버퍼
+        self._recent = np.zeros(0, dtype="float32")
+        self._recent_max = 4096
+
         self.last_recording: np.ndarray | None = None
 
     # ---- 상태 ---------------------------------------------------------------
@@ -38,6 +42,17 @@ class AudioEngine:
     def current_level(self) -> float:
         """가장 최근 오디오 블록의 RMS(0.0~1.0). 레벨미터용."""
         return self._level
+
+    def _push_recent(self, mono: np.ndarray) -> None:
+        """최근 모노 샘플 링버퍼 갱신 (락 안에서 호출)."""
+        self._recent = np.concatenate([self._recent, np.asarray(mono, dtype="float32")])
+        if self._recent.size > self._recent_max:
+            self._recent = self._recent[-self._recent_max :]
+
+    def recent_samples(self) -> np.ndarray:
+        """실시간 스펙트럼용 최근 모노 샘플 복사본."""
+        with self._lock:
+            return self._recent.copy()
 
     # ---- 녹음 ---------------------------------------------------------------
     def start_recording(
@@ -55,6 +70,7 @@ class AudioEngine:
         sd.stop()  # 재생(특히 loop) 중이면 멈추고 녹음 시작
         ch = channels or self.channels
         self._frames = []
+        self._recent = np.zeros(0, dtype="float32")
         self._level = 0.0
 
         def callback(indata, frames, time_info, status):  # noqa: ANN001
@@ -62,8 +78,10 @@ class AudioEngine:
             if status:
                 # 언더런/오버런 등은 무시하되 추후 로깅 가능
                 pass
+            mono = indata[:, 0] if indata.ndim == 2 else indata
             with self._lock:
                 self._frames.append(indata.copy())
+                self._push_recent(mono)
             self._level = float(np.sqrt(np.mean(np.square(indata))))
 
         self._stream = sd.InputStream(

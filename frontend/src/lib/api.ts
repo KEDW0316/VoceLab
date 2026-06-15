@@ -20,6 +20,9 @@ const mockApi: PyApi = {
   async get_level() {
     return 0.4 + Math.random() * 0.3;
   },
+  async get_spectrum() {
+    return mock.mockSpectrum();
+  },
   async play() {},
   async stop_playback() {},
   async list_scales() {

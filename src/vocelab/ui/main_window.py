@@ -1,4 +1,4 @@
-"""메인 윈도우 — 오디오 인터페이스 선택, 녹음/재생, 파형 표시. (M1)"""
+"""메인 윈도우 — 오인페 선택, 녹음/재생, 파형·스펙트로그램·음향지표. (M1+M2)"""
 
 from __future__ import annotations
 
@@ -10,11 +10,15 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QProgressBar,
     QPushButton,
+    QSplitter,
     QVBoxLayout,
     QWidget,
 )
 
+from vocelab.analysis import analyze
 from vocelab.audio import AudioEngine, input_devices, output_devices
+from vocelab.ui.widgets.metrics_panel import MetricsPanel
+from vocelab.ui.widgets.spectrogram import SpectrogramWidget
 from vocelab.ui.widgets.waveform import WaveformWidget
 
 
@@ -22,7 +26,7 @@ class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("VoceLab")
-        self.resize(900, 560)
+        self.resize(1100, 680)
 
         self.engine = AudioEngine()
         self._input_index: int | None = None
@@ -31,7 +35,6 @@ class MainWindow(QMainWindow):
         self._build_ui()
         self._populate_devices()
 
-        # 녹음 중 입력 레벨을 주기적으로 폴링해 레벨미터 갱신
         self._level_timer = QTimer(self)
         self._level_timer.setInterval(50)
         self._level_timer.timeout.connect(self._update_level)
@@ -58,9 +61,23 @@ class MainWindow(QMainWindow):
         dev_row.addWidget(self.refresh_btn)
         root.addLayout(dev_row)
 
-        # 파형
+        # 메인 영역: 좌(파형+스펙트로그램) / 우(음향지표)
+        splitter = QSplitter(Qt.Horizontal)
+
+        left = QWidget()
+        left_box = QVBoxLayout(left)
+        left_box.setContentsMargins(0, 0, 0, 0)
         self.waveform = WaveformWidget()
-        root.addWidget(self.waveform, stretch=1)
+        self.spectrogram = SpectrogramWidget()
+        left_box.addWidget(self.waveform, stretch=2)
+        left_box.addWidget(self.spectrogram, stretch=3)
+        splitter.addWidget(left)
+
+        self.metrics_panel = MetricsPanel()
+        splitter.addWidget(self.metrics_panel)
+        splitter.setStretchFactor(0, 3)
+        splitter.setStretchFactor(1, 1)
+        root.addWidget(splitter, stretch=1)
 
         # 입력 레벨미터
         level_row = QHBoxLayout()
@@ -143,12 +160,26 @@ class MainWindow(QMainWindow):
                 return
             self.record_btn.setText("● 녹음")
             self.waveform.set_waveform(data, self.engine.samplerate)
+            self.spectrogram.set_audio(data, self.engine.samplerate)
             has_audio = len(data) > 0
             self.play_btn.setEnabled(has_audio)
             secs = len(data) / self.engine.samplerate if has_audio else 0
+            if has_audio:
+                self.status.setText(f"녹음 완료 ({secs:.1f}s). 분석 중…")
+                # UI를 먼저 갱신한 뒤 분석 실행
+                QTimer.singleShot(0, lambda: self._run_analysis(data, secs))
+            else:
+                self.status.setText("녹음된 오디오가 없습니다.")
+
+    def _run_analysis(self, data, secs: float) -> None:
+        try:
+            metrics = analyze(data, self.engine.samplerate)
+            self.metrics_panel.set_metrics(metrics)
             self.status.setText(
                 f"녹음 완료 ({secs:.1f}s). ▶ 재생으로 바로 들어보세요."
             )
+        except Exception as exc:  # noqa: BLE001
+            self.status.setText(f"분석 실패: {exc}")
 
     def _on_play(self) -> None:
         try:
@@ -158,7 +189,6 @@ class MainWindow(QMainWindow):
             self.status.setText(f"재생 실패: {exc}")
 
     def _update_level(self) -> None:
-        # RMS(0~1)를 dB 느낌으로 비선형 스케일해 미터 표시
         rms = self.engine.current_level
         self.level_bar.setValue(int(min(1.0, rms * 4.0) * 100))
 

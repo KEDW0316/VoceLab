@@ -33,3 +33,43 @@ def envelope_downsample(
     idx = np.repeat(np.arange(mins.size) * bucket, 2)
     x = idx / samplerate
     return x, y
+
+
+def spectrogram_db(
+    mono: np.ndarray,
+    samplerate: int,
+    *,
+    nperseg: int = 1024,
+    overlap: float = 0.75,
+    fmax: float = 5000.0,
+    floor_db: float = -90.0,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """로그(dB) 파워 스펙트로그램을 계산해 (times, freqs, db)를 반환한다.
+
+    db는 (n_freqs, n_times) 배열로, 최댓값을 0 dB로 정규화하고 floor_db에서 클립한다.
+    scipy만 사용(순수 함수)하여 단위 테스트가 쉽다.
+    """
+    from scipy.signal import spectrogram as _spec
+
+    if mono.size < nperseg:
+        nperseg = max(64, 1 << int(np.floor(np.log2(max(mono.size, 64)))))
+    noverlap = int(nperseg * overlap)
+
+    freqs, times, sxx = _spec(
+        mono.astype(np.float64),
+        fs=samplerate,
+        nperseg=nperseg,
+        noverlap=noverlap,
+        scaling="spectrum",
+        mode="magnitude",
+    )
+
+    if fmax:
+        keep = freqs <= fmax
+        freqs = freqs[keep]
+        sxx = sxx[keep, :]
+
+    db = 20.0 * np.log10(sxx + 1e-12)
+    db -= db.max()  # 0 dB로 정규화
+    np.clip(db, floor_db, 0.0, out=db)
+    return times, freqs, db

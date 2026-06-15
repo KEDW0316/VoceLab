@@ -8,14 +8,27 @@ type Tab = "spectrogram" | "spectrum";
 
 interface Props {
   spectrogram: number[][];
+  inputIdx: number | null;
+  recording: boolean;
 }
 
 // 스펙트로그램 / 실시간 스펙트럼(EQ) 탭 + 프리즈(멈춤).
-export function VizTabs({ spectrogram }: Props) {
+export function VizTabs({ spectrogram, inputIdx, recording }: Props) {
   const [tab, setTab] = useState<Tab>("spectrogram");
   const [frozen, setFrozen] = useState(false);
   const [spec, setSpec] = useState<{ freqs: number[]; db: number[] }>({ freqs: [], db: [] });
   const timer = useRef<number | null>(null);
+
+  // 상시 모니터: 스펙트럼 탭이고 녹음 중이 아니면 입력을 계속 들어 스펙트럼을 갱신.
+  // (녹음 중에는 녹음 스트림이 이미 최근 버퍼를 채움)
+  useEffect(() => {
+    if (tab === "spectrum" && !recording) {
+      api.start_monitor(inputIdx);
+      return () => {
+        api.stop_monitor();
+      };
+    }
+  }, [tab, recording, inputIdx]);
 
   // 실시간 스펙트럼 폴링: 스펙트럼 탭 + 프리즈 해제일 때만. 빈 응답은 무시(마지막 곡선 유지).
   useEffect(() => {

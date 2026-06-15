@@ -185,6 +185,17 @@ class Api:
         freqs, db = spectrum(self.engine.recent_samples(), self.engine.samplerate)
         return {"freqs": freqs, "db": db}
 
+    def start_monitor(self, input_index=None) -> None:
+        """상시 모니터 시작(녹음 안 할 때도 스펙트럼이 흐르도록)."""
+        device = None if input_index is None else int(input_index)
+        try:
+            self.engine.start_monitor(device=device)
+        except Exception:  # noqa: BLE001
+            pass
+
+    def stop_monitor(self) -> None:
+        self.engine.stop_monitor()
+
     # 재생
     def play(self, loop: bool = False, start: float = 0.0) -> None:
         sr = self.engine.samplerate

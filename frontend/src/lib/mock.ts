@@ -88,8 +88,8 @@ export function mockSpectrogram(freqBins = 96, timeBins = 200): number[][] {
 }
 
 // 실시간 스펙트럼(EQ 곡선) 목 — 로그 주파수 + 포먼트형 피크 + 롤오프
-export function mockSpectrum(n = 160): { freqs: number[]; db: number[] } {
-  const fmin = 50, fmax = 8000;
+export function mockSpectrum(n = 180): { freqs: number[]; db: number[] } {
+  const fmin = 50, fmax = 16000;
   const freqs: number[] = [];
   const db: number[] = [];
   const peaks = [

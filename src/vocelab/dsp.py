@@ -80,8 +80,8 @@ def spectrum(
     samplerate: int,
     *,
     fmin: float = 50.0,
-    fmax: float = 8000.0,
-    n_out: int = 160,
+    fmax: float = 16000.0,
+    n_out: int = 180,
     floor_db: float = -100.0,
 ) -> tuple[list[float], list[float]]:
     """실시간 스펙트럼 분석기(EQ 곡선)용 단일 프레임 크기 스펙트럼.

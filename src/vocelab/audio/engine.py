@@ -24,6 +24,7 @@ class AudioEngine:
 
         self._stream = None  # sd.InputStream (녹음 중일 때만)
         self._out_stream = None  # sd.OutputStream (재생 중일 때만)
+        self._monitor_stream = None  # sd.InputStream (상시 모니터: 스펙트럼용)
         self._frames: list[np.ndarray] = []
         self._lock = threading.Lock()
         self._level = 0.0
@@ -55,6 +56,36 @@ class AudioEngine:
         with self._lock:
             return self._recent.copy()
 
+    # ---- 상시 모니터 (녹음 안 할 때도 스펙트럼이 흐르도록) -------------------
+    def start_monitor(self, device: int | None = None) -> None:
+        """입력을 계속 듣고 최근 버퍼만 갱신하는 경량 모니터 스트림.
+
+        녹음 중에는 녹음 스트림이 최근 버퍼를 채우므로 불필요(이미 흐름).
+        """
+        if self.is_recording or self._monitor_stream is not None:
+            return
+        import sounddevice as sd
+
+        def callback(indata, frames, time_info, status):  # noqa: ANN001
+            mono = indata[:, 0] if indata.ndim == 2 else indata
+            with self._lock:
+                self._push_recent(mono)
+            self._level = float(np.sqrt(np.mean(np.square(indata))))
+
+        self._monitor_stream = sd.InputStream(
+            samplerate=self.samplerate, channels=1, device=device, callback=callback
+        )
+        self._monitor_stream.start()
+
+    def stop_monitor(self) -> None:
+        if self._monitor_stream is not None:
+            try:
+                self._monitor_stream.stop()
+                self._monitor_stream.close()
+            except Exception:  # noqa: BLE001
+                pass
+            self._monitor_stream = None
+
     # ---- 녹음 ---------------------------------------------------------------
     def start_recording(
         self, device: int | None = None, channels: int | None = None
@@ -69,6 +100,7 @@ class AudioEngine:
         import sounddevice as sd
 
         self.stop_playback()  # 재생(특히 loop) 중이면 멈추고 녹음 시작
+        self.stop_monitor()  # 모니터 입력이 장치를 점유 중이면 해제
         ch = channels or self.channels
         self._frames = []
         self._recent = np.zeros(0, dtype="float32")

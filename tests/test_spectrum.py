@@ -24,7 +24,7 @@ def test_spectrum_log_frequency_increasing():
     t = np.arange(SR) / SR
     freqs, _ = spectrum(np.sin(2 * np.pi * 440 * t).astype("float32"), SR)
     assert all(freqs[i] < freqs[i + 1] for i in range(len(freqs) - 1))
-    assert freqs[0] >= 50 and freqs[-1] <= 8000
+    assert freqs[0] >= 50 and freqs[-1] <= 16000
 
 
 def test_spectrum_empty_for_tiny_input():

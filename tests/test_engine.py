@@ -33,11 +33,17 @@ class FakeSD:
 
     def __init__(self):
         self.streams = []
+        self.in_streams = []
         self.stop_calls = 0
 
     def OutputStream(self, **kw):  # noqa: N802
         s = FakeOutStream(**kw)
         self.streams.append(s)
+        return s
+
+    def InputStream(self, **kw):  # noqa: N802
+        s = FakeOutStream(**kw)
+        self.in_streams.append(s)
         return s
 
     def stop(self):
@@ -49,6 +55,7 @@ def fake_sd(monkeypatch):
     fake = FakeSD()
     module = types.ModuleType("sounddevice")
     module.OutputStream = fake.OutputStream
+    module.InputStream = fake.InputStream
     module.stop = fake.stop
     module.CallbackStop = FakeSD.CallbackStop
     monkeypatch.setitem(sys.modules, "sounddevice", module)
@@ -108,6 +115,20 @@ def test_play_callback_feeds_recent_buffer(fake_sd):
     cb(out, 512, None, None)
     assert eng.recent_samples().size >= 512
     assert np.allclose(out, 0.5)
+
+
+def test_monitor_start_stop(fake_sd):
+    eng = AudioEngine()
+    eng.start_monitor()
+    assert len(fake_sd.in_streams) == 1 and fake_sd.in_streams[0].started
+    eng.start_monitor()  # 중복 시작 안 함
+    assert len(fake_sd.in_streams) == 1
+    # 모니터 콜백이 최근 버퍼를 채움
+    cb = fake_sd.in_streams[0].kw["callback"]
+    cb(np.ones((256, 1), dtype="float32"), 256, None, None)
+    assert eng.recent_samples().size == 256
+    eng.stop_monitor()
+    assert fake_sd.in_streams[0].closed
 
 
 def test_play_start_frame_seeks(fake_sd):

@@ -198,7 +198,7 @@ export default function App() {
               onSeek={playFrom}
             />
           </Panel>
-          <VizTabs spectrogram={result?.spectrogram ?? []} />
+          <VizTabs spectrogram={result?.spectrogram ?? []} inputIdx={inputIdx} recording={recording} />
         </div>
         <MetricsPanel metrics={result?.metrics ?? []} baseline={baseline} />
       </div>

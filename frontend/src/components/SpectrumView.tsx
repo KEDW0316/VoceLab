@@ -83,7 +83,7 @@ export function SpectrumView({ freqs, db, floor = -100 }: Props) {
       {freqs.length < 2 && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-muted-foreground/40">
           <Activity className="h-7 w-7" />
-          <span className="text-xs">녹음을 시작하면 실시간 스펙트럼이 표시됩니다</span>
+          <span className="text-xs">입력 신호를 기다리는 중… (소리를 내보세요)</span>
         </div>
       )}
     </div>

@@ -52,6 +52,7 @@ class AudioEngine:
 
         import sounddevice as sd
 
+        sd.stop()  # 재생(특히 loop) 중이면 멈추고 녹음 시작
         ch = channels or self.channels
         self._frames = []
         self._level = 0.0
@@ -97,18 +98,22 @@ class AudioEngine:
 
     # ---- 재생 ---------------------------------------------------------------
     def play(
-        self, data: np.ndarray | None = None, device: int | None = None
+        self,
+        data: np.ndarray | None = None,
+        device: int | None = None,
+        loop: bool = False,
     ) -> None:
         """방금 녹음한(또는 주어진) 버퍼를 즉시 재생한다.
 
         data가 None이면 가장 최근 녹음을 재생한다.
+        loop=True면 stop_playback() 전까지 반복 재생한다(귀 훈련용).
         """
         import sounddevice as sd
 
         buf = self.last_recording if data is None else data
         if buf is None or len(buf) == 0:
             return
-        sd.play(buf, samplerate=self.samplerate, device=device)
+        sd.play(buf, samplerate=self.samplerate, device=device, loop=loop)
 
     def stop_playback(self) -> None:
         import sounddevice as sd

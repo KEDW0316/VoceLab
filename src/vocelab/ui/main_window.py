@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import QTimer, Qt
 from PySide6.QtWidgets import (
+    QCheckBox,
     QComboBox,
     QHBoxLayout,
     QLabel,
@@ -103,6 +104,15 @@ class MainWindow(QMainWindow):
         self.stop_btn = QPushButton("■ 정지")
         self.stop_btn.clicked.connect(self.engine.stop_playback)
         btn_row.addWidget(self.stop_btn)
+
+        btn_row.addStretch()
+        # 피드백 모드: 녹음이 끝나면 방금 부른 스케일을 자동(반복) 재생한다.
+        self.feedback_check = QCheckBox("피드백 모드 (녹음 후 자동 반복재생)")
+        self.feedback_check.setToolTip(
+            "켜면 녹음을 멈추는 즉시 방금 녹음을 반복 재생합니다(귀 훈련용).\n"
+            "끄면 일반 모드 — 녹음만 하고 지표가 표시됩니다(▶로 직접 재생)."
+        )
+        btn_row.addWidget(self.feedback_check)
         root.addLayout(btn_row)
 
         self.status = QLabel("오디오 인터페이스를 선택하고 녹음을 시작하세요.")
@@ -168,6 +178,12 @@ class MainWindow(QMainWindow):
                 self.status.setText(f"녹음 완료 ({secs:.1f}s). 분석 중…")
                 # UI를 먼저 갱신한 뒤 분석 실행
                 QTimer.singleShot(0, lambda: self._run_analysis(data, secs))
+                # 피드백 모드: 정지 즉시 방금 녹음을 반복 재생 (분석과 독립)
+                if self.feedback_check.isChecked():
+                    try:
+                        self.engine.play(device=self._output_index, loop=True)
+                    except Exception as exc:  # noqa: BLE001
+                        self.status.setText(f"재생 실패: {exc}")
             else:
                 self.status.setText("녹음된 오디오가 없습니다.")
 
@@ -175,16 +191,22 @@ class MainWindow(QMainWindow):
         try:
             metrics = analyze(data, self.engine.samplerate)
             self.metrics_panel.set_metrics(metrics)
-            self.status.setText(
-                f"녹음 완료 ({secs:.1f}s). ▶ 재생으로 바로 들어보세요."
-            )
+            if self.feedback_check.isChecked():
+                self.status.setText(
+                    f"녹음 완료 ({secs:.1f}s). 🔁 반복 재생 중 — ■ 정지로 멈춤"
+                )
+            else:
+                self.status.setText(
+                    f"녹음 완료 ({secs:.1f}s). ▶ 재생으로 바로 들어보세요."
+                )
         except Exception as exc:  # noqa: BLE001
             self.status.setText(f"분석 실패: {exc}")
 
     def _on_play(self) -> None:
+        loop = self.feedback_check.isChecked()
         try:
-            self.engine.play(device=self._output_index)
-            self.status.setText("재생 중…")
+            self.engine.play(device=self._output_index, loop=loop)
+            self.status.setText("🔁 반복 재생 중 — ■ 정지로 멈춤" if loop else "재생 중…")
         except Exception as exc:  # noqa: BLE001
             self.status.setText(f"재생 실패: {exc}")
 

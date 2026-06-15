@@ -21,12 +21,21 @@ export default function App() {
   const [status, setStatus] = useState("오디오 인터페이스를 선택하고 녹음을 시작하세요.");
   const levelTimer = useRef<number | null>(null);
 
-  // outputIdx는 백엔드 재생 시 사용 — 참조 유지
-  useEffect(() => void outputIdx, [outputIdx]);
-
-  // 백엔드(pywebview)가 없는 브라우저/데모 모드에서는 목 분석 결과로 미리 채운다.
+  // 출력 장치 선택을 백엔드에 전달(재생·가이드 톤에 사용)
   useEffect(() => {
-    if (!isBackendReady()) {
+    api.set_output_device(outputIdx);
+  }, [outputIdx]);
+
+  // 백엔드(pywebview)가 없는 브라우저/데모 모드에서는 미리 채운다.
+  // window.__VOCELAB_SEED__ 가 주입돼 있으면(검증용 실데이터) 그것을, 없으면 목을 사용.
+  useEffect(() => {
+    if (isBackendReady()) return;
+    const seed = (window as unknown as { __VOCELAB_SEED__?: AnalysisResult })
+      .__VOCELAB_SEED__;
+    if (seed) {
+      setResult(seed);
+      setStatus(`녹음 완료 (${seed.duration.toFixed(1)}s) — 실 분석 데이터`);
+    } else {
       setResult(mockAnalysis);
       setStatus("데모 모드 — 목 데이터 표시 중 (백엔드 미연결)");
     }

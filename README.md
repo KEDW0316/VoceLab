@@ -34,12 +34,23 @@ PYTHONPATH=src python tools/gen_references.py
 
 ## 설치 & 실행
 
+UI는 **웹 프론트엔드(React+Tailwind) + pywebview 데스크톱 셸**이다. 오디오·분석은
+Python(`sounddevice`/Parselmouth)이 담당하고, 프론트엔드는 `window.pywebview.api`로
+이를 호출한다.
+
 ```bash
+# 1) 프론트엔드 빌드 (최초 1회 또는 UI 변경 시)
+cd frontend && npm install && npm run build && cd ..
+
+# 2) Python 백엔드 + 데스크톱 셸 실행
 python -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-python -m vocelab
+python -m vocelab                  # = vocelab.webapp (pywebview 창)
 ```
+
+> 프론트엔드 단독 개발: `cd frontend && npm run dev` (백엔드 없으면 목 데이터로 동작).
+> 구버전 PySide6 UI는 `python -m vocelab.app` 또는 `vocelab-qt`로 실행(레거시).
 
 > Windows에서 ASIO 저지연을 쓰려면 인터페이스 제조사 ASIO 드라이버를 설치하세요.
 > macOS는 CoreAudio로 별도 드라이버 없이 동작합니다.

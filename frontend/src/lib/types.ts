@@ -40,6 +40,7 @@ export interface Scale {
 
 export interface PyApi {
   list_devices(): Promise<{ inputs: Device[]; outputs: Device[] }>;
+  set_output_device(index: number | null): Promise<void>;
   start_recording(inputIndex: number | null): Promise<void>;
   stop_recording(): Promise<AnalysisResult>;
   get_level(): Promise<number>;

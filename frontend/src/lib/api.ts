@@ -12,6 +12,7 @@ const mockApi: PyApi = {
   async list_devices() {
     return { inputs: mock.mockInputs, outputs: mock.mockOutputs };
   },
+  async set_output_device() {},
   async start_recording() {},
   async stop_recording() {
     return mock.mockAnalysis;

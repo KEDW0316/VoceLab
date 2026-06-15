@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AudioLines, Waves } from "lucide-react";
-import type { AnalysisResult } from "@/lib/types";
+import type { AnalysisResult, SessionSummary } from "@/lib/types";
 import { api, isBackendReady } from "@/lib/api";
 import { mockAnalysis } from "@/lib/mock";
 import { Panel } from "@/components/ui/panel";
@@ -10,7 +10,12 @@ import { Waveform } from "@/components/Waveform";
 import { Spectrogram } from "@/components/Spectrogram";
 import { MetricsPanel } from "@/components/MetricsPanel";
 import { ScalePractice } from "@/components/ScalePractice";
+import { SessionBar } from "@/components/SessionBar";
 import { Transport } from "@/components/Transport";
+
+function toBaselineMap(r: AnalysisResult): Record<string, number | null> {
+  return Object.fromEntries(r.metrics.map((m) => [m.key, m.value]));
+}
 
 export default function App() {
   const [inputIdx, setInputIdx] = useState<number | null>(null);
@@ -21,8 +26,17 @@ export default function App() {
   const [elapsed, setElapsed] = useState(0);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [status, setStatus] = useState("오디오 인터페이스를 선택하고 녹음을 시작하세요.");
+  const [sessions, setSessions] = useState<SessionSummary[]>([]);
+  const [currentId, setCurrentId] = useState<string | null>(null);
+  const [baselineId, setBaselineId] = useState<string | null>(null);
+  const [baseline, setBaseline] = useState<Record<string, number | null> | null>(null);
   const levelTimer = useRef<number | null>(null);
   const elapsedTimer = useRef<number | null>(null);
+
+  const refreshSessions = useCallback(() => {
+    api.list_sessions().then(setSessions);
+  }, []);
+  useEffect(refreshSessions, [refreshSessions]);
 
   useEffect(() => {
     api.set_output_device(outputIdx);
@@ -62,6 +76,8 @@ export default function App() {
       setStatus("분석 중…");
       const res = await api.stop_recording();
       setResult(res);
+      setCurrentId(res.session_id ?? null);
+      refreshSessions();
       if (feedback) {
         await api.play(true);
         setStatus(`녹음 완료 (${res.duration.toFixed(1)}s). 🔁 반복 재생 중 — ■ 로 멈춤`);
@@ -69,7 +85,37 @@ export default function App() {
         setStatus(`녹음 완료 (${res.duration.toFixed(1)}s). ▶ 재생으로 들어보세요.`);
       }
     }
-  }, [recording, inputIdx, feedback, pollLevel]);
+  }, [recording, inputIdx, feedback, pollLevel, refreshSessions]);
+
+  // 세션 핸들러
+  const loadSession = async (id: string) => {
+    const res = await api.get_session(id);
+    if (res) {
+      setResult(res);
+      setCurrentId(id);
+      setStatus("기록 불러옴 — ▶ 또는 기록의 재생 버튼으로 들어보세요.");
+    }
+  };
+  const deleteSession = async (id: string) => {
+    await api.delete_session(id);
+    if (baselineId === id) {
+      setBaselineId(null);
+      setBaseline(null);
+    }
+    refreshSessions();
+  };
+  const setBaselineSession = async (id: string) => {
+    if (baselineId === id) {
+      setBaselineId(null);
+      setBaseline(null);
+      return;
+    }
+    const res = await api.get_session(id);
+    if (res) {
+      setBaselineId(id);
+      setBaseline(toBaselineMap(res));
+    }
+  };
 
   // 스페이스바로 녹음 토글 (입력 포커스가 아닐 때)
   useEffect(() => {
@@ -109,8 +155,18 @@ export default function App() {
             <Spectrogram data={result?.spectrogram ?? []} />
           </Panel>
         </div>
-        <MetricsPanel metrics={result?.metrics ?? []} />
+        <MetricsPanel metrics={result?.metrics ?? []} baseline={baseline} />
       </div>
+
+      <SessionBar
+        sessions={sessions}
+        currentId={currentId}
+        baselineId={baselineId}
+        onLoad={loadSession}
+        onPlay={(id) => api.play_session(id, feedback)}
+        onDelete={deleteSession}
+        onSetBaseline={setBaselineSession}
+      />
 
       <ScalePractice />
 

@@ -1,4 +1,8 @@
-import type { AnalysisResult, Device, Metric, Scale } from "./types";
+import type { AnalysisResult, Device, Metric, Scale, SessionSummary } from "./types";
+
+const BETTER: Record<string, "high" | "low" | null> = {
+  cpps: "high", hnr: "high", jitter: "low", shimmer: "low",
+};
 
 // pywebview 백엔드가 없을 때(브라우저 단독 개발/스크린샷용) 쓰는 목 데이터.
 
@@ -27,10 +31,17 @@ function mk(
 ): Metric {
   return {
     key, label, value, unit, category, description, normal, status, note,
+    better: BETTER[key] ?? null,
     display: value === null ? "—" : value.toFixed(2),
     reference: { title: `${label} 출처`, citation: "", url: "https://doi.org/10.0000/example", summary: description },
   };
 }
+
+export const mockSessions: SessionSummary[] = [
+  { id: "20260615-0840-aa", created_at: "2026-06-15T08:40:00", label: "워밍업 후", duration: 1.6, cpps: 8.91, cpps_status: "good" },
+  { id: "20260615-0815-bb", created_at: "2026-06-15T08:15:00", label: "워밍업 전", duration: 1.5, cpps: 5.2, cpps_status: "watch" },
+  { id: "20260614-2110-cc", created_at: "2026-06-14T21:10:00", label: "", duration: 2.1, cpps: 7.0, cpps_status: "good" },
+];
 
 export const mockMetrics: Metric[] = [
   mk("cpps", "CPPS", 8.91, "dB", "음질", "켑스트럼 피크 두드러짐 — 높을수록 또렷한 발성.", "≥ 4 dB 권장", "good", "또렷하고 안정적인 발성"),
@@ -81,4 +92,17 @@ export const mockAnalysis: AnalysisResult = {
   waveform: mockWaveform(),
   spectrogram: mockSpectrogram(),
   metrics: mockMetrics,
+};
+
+// "워밍업 전" 변형 — 더 낮은 CPPS/HNR, 더 높은 jitter/shimmer (비교 데모용)
+const beforeAdjust: Record<string, number> = {
+  cpps: 5.2, hnr: 16.8, jitter: 2.1, shimmer: 5.4,
+};
+export const mockAnalysisBefore: AnalysisResult = {
+  duration: 1.5,
+  waveform: mockWaveform(),
+  spectrogram: mockSpectrogram(),
+  metrics: mockMetrics.map((m) =>
+    m.key in beforeAdjust ? { ...m, value: beforeAdjust[m.key] } : m
+  ),
 };

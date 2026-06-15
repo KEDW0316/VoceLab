@@ -21,6 +21,7 @@ export interface Metric {
   category: string;
   status: "good" | "watch" | "poor" | "info";
   note: string;
+  better: "high" | "low" | null; // 전/후 비교 델타 색칠 방향
   reference: Reference | null;
 }
 
@@ -29,6 +30,16 @@ export interface AnalysisResult {
   waveform: number[]; // 다운샘플된 모노 (-1..1)
   spectrogram: number[][]; // [freq][time], 0..1 정규화
   metrics: Metric[];
+  session_id?: string | null;
+}
+
+export interface SessionSummary {
+  id: string;
+  created_at: string;
+  label: string;
+  duration: number;
+  cpps: number | null;
+  cpps_status: Metric["status"];
 }
 
 export interface Scale {
@@ -51,4 +62,9 @@ export interface PyApi {
   list_scales(): Promise<Scale[]>;
   solfege_for(scaleKey: string, tonic: string): Promise<string>;
   play_guide_tone(scaleKey: string, tonic: string): Promise<void>;
+  list_sessions(): Promise<SessionSummary[]>;
+  get_session(id: string): Promise<AnalysisResult | null>;
+  delete_session(id: string): Promise<boolean>;
+  label_session(id: string, label: string): Promise<boolean>;
+  play_session(id: string, loop: boolean): Promise<void>;
 }

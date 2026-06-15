@@ -29,6 +29,19 @@ const mockApi: PyApi = {
     return mock.mockScales.find((s) => s.key === scaleKey)?.solfege ?? "";
   },
   async play_guide_tone() {},
+  async list_sessions() {
+    return mock.mockSessions;
+  },
+  async get_session(id) {
+    return id === "20260615-0815-bb" ? mock.mockAnalysisBefore : mock.mockAnalysis;
+  },
+  async delete_session() {
+    return true;
+  },
+  async label_session() {
+    return true;
+  },
+  async play_session() {},
 };
 
 export const isBackendReady = () =>

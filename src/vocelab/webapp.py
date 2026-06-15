@@ -15,11 +15,12 @@ import numpy as np
 
 from vocelab.analysis import analyze
 from vocelab.analysis.metrics import VoiceMetrics, to_mono_f64
-from vocelab.analysis.rating import rate
+from vocelab.analysis.rating import direction, rate
 from vocelab.analysis.references import reference_for
 from vocelab.audio import AudioEngine, input_devices, output_devices
 from vocelab.dsp import spectrogram_db
 from vocelab.scales import SCALES, get_scale
+from vocelab.sessions import SessionStore
 from vocelab.synth import note_name_to_freq, solfege, synthesize
 
 # ---- 페이로드 변환 (순수, 테스트 가능) -------------------------------------
@@ -42,6 +43,7 @@ def metrics_payload(metrics: VoiceMetrics) -> list[dict]:
                 "category": m.category,
                 "status": status,
                 "note": note,
+                "better": direction(m.key),
                 "reference": (
                     None
                     if ref is None
@@ -115,9 +117,10 @@ def device_payload(dev) -> dict:
 
 
 class Api:
-    def __init__(self) -> None:
+    def __init__(self, store: SessionStore | None = None) -> None:
         self.engine = AudioEngine()
         self._output_index: int | None = None
+        self.store = store or SessionStore()
 
     # 장치
     def list_devices(self) -> dict:
@@ -139,7 +142,35 @@ class Api:
 
     def stop_recording(self) -> dict:
         data = self.engine.stop_recording()
-        return analysis_payload(data, self.engine.samplerate)
+        payload = analysis_payload(data, self.engine.samplerate)
+        # 녹음마다 자동으로 세션에 기록(훈련 로그)
+        try:
+            rec = self.store.save(payload, data, self.engine.samplerate)
+            payload["session_id"] = rec["id"]
+        except Exception:  # noqa: BLE001
+            payload["session_id"] = None
+        return payload
+
+    # 세션(기록)
+    def list_sessions(self) -> list[dict]:
+        return self.store.list()
+
+    def get_session(self, sid: str) -> dict | None:
+        doc = self.store.get(sid)
+        return doc["payload"] if doc else None
+
+    def delete_session(self, sid: str) -> bool:
+        return self.store.delete(sid)
+
+    def label_session(self, sid: str, label: str) -> bool:
+        return self.store.set_label(sid, label)
+
+    def play_session(self, sid: str, loop: bool = False) -> None:
+        loaded = self.store.audio(sid)
+        if loaded is None:
+            return
+        data, _sr = loaded
+        self.engine.play(data=data, device=self._output_index, loop=bool(loop))
 
     def get_level(self) -> float:
         return float(self.engine.current_level)

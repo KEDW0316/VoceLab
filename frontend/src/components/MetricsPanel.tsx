@@ -45,7 +45,28 @@ function fmtValue(m: Metric): string {
   return m.value.toFixed(2);
 }
 
-function MetricCard({ m }: { m: Metric }) {
+// 전/후 비교 델타: 기준값 대비 변화량 + 개선 여부 색.
+function DeltaBadge({ m, base }: { m: Metric; base: number }) {
+  if (m.value === null) return null;
+  const d = m.value - base;
+  if (Math.abs(d) < 1e-6) return <span className="text-[9px] text-muted-foreground">±0</span>;
+  const improved = m.better === "high" ? d > 0 : m.better === "low" ? d < 0 : null;
+  const color =
+    improved === null
+      ? "hsl(var(--muted-foreground))"
+      : improved
+        ? "hsl(var(--success))"
+        : "hsl(var(--danger))";
+  const sign = d > 0 ? "+" : "";
+  return (
+    <span className="num text-[9px]" style={{ color }} title="비교 기준 대비">
+      {d > 0 ? "▲" : "▼"} {sign}
+      {Math.abs(d) >= 100 ? Math.round(d) : d.toFixed(Math.abs(d) >= 10 ? 1 : 2)}
+    </span>
+  );
+}
+
+function MetricCard({ m, base }: { m: Metric; base?: number | null }) {
   const accent = CATEGORY_COLOR[m.category] ?? "hsl(var(--primary))";
   const statusColor = STATUS_COLOR[m.status];
   const rated = m.status !== "info";
@@ -91,12 +112,19 @@ function MetricCard({ m }: { m: Metric }) {
           {fmtValue(m)}
         </span>
         <span className="text-[10px] text-muted-foreground">{m.unit}</span>
+        {base != null && <span className="ml-auto"><DeltaBadge m={m} base={base} /></span>}
       </div>
     </div>
   );
 }
 
-export function MetricsPanel({ metrics }: { metrics: Metric[] }) {
+export function MetricsPanel({
+  metrics,
+  baseline,
+}: {
+  metrics: Metric[];
+  baseline?: Record<string, number | null> | null;
+}) {
   const groups = groupByCategory(metrics);
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-lg border border-border bg-card">
@@ -115,7 +143,9 @@ export function MetricsPanel({ metrics }: { metrics: Metric[] }) {
               {STATUS_LABEL[s]}
             </span>
           ))}
-          <span className="ml-auto opacity-70">호버 = 설명·출처</span>
+          <span className="ml-auto opacity-70">
+            {baseline ? "Δ = 비교 기준 대비" : "호버 = 설명·출처"}
+          </span>
         </div>
       </div>
       <div className="flex-1 space-y-4 overflow-y-auto p-3">
@@ -142,7 +172,7 @@ export function MetricsPanel({ metrics }: { metrics: Metric[] }) {
               </div>
               <div className="grid grid-cols-2 gap-1.5">
                 {items.map((m) => (
-                  <MetricCard key={m.key} m={m} />
+                  <MetricCard key={m.key} m={m} base={baseline ? baseline[m.key] : undefined} />
                 ))}
               </div>
             </div>

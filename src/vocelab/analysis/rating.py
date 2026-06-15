@@ -78,3 +78,14 @@ def rate(key: str, value: float | None) -> tuple[str, str]:
 
     note = rule.notes[{GOOD: 0, WATCH: 1, POOR: 2}[status]]
     return status, note
+
+
+def direction(key: str) -> str | None:
+    """전/후 비교 델타 색칠용 방향. 'high'(클수록 좋음)/'low'(작을수록 좋음)/None.
+
+    밴드형(비브라토)·정보성 지표는 단순 방향이 없으므로 None.
+    """
+    rule = _RULES.get(key)
+    if rule is None or rule.better == "band":
+        return None
+    return rule.better

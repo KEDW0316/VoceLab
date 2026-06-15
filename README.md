@@ -22,6 +22,12 @@
   트랜스포즈(코치 방식) + 솔페지 표시
 - ⏳ 세션 저장·전후 비교, VRP (M4~)
 
+### 발성 문제별 권장 연습
+
+[`docs/VOCAL_EXERCISES.md`](./docs/VOCAL_EXERCISES.md) — 기식성·과긴장·고음역·음정·공명·
+호흡 등 발성 문제별로 효과가 알려진 발음·연습(SOVT, resonant voice, 트왱, VFE, 메사 디 보체
+등)과 기전·근거(논문 DOI)를 정리. 5개 병렬 웹 리서치를 종합·교차검증했으며 검증 한계도 명시.
+
 ### 지표 출처
 
 각 지표의 근거 논문·요약은 [`docs/REFERENCES.md`](./docs/REFERENCES.md)에 정리되어 있고,

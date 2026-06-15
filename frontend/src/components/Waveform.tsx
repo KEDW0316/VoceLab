@@ -1,12 +1,11 @@
 import { useEffect, useRef } from "react";
+import { AudioLines } from "lucide-react";
 
 interface Props {
-  data: number[];
-  duration: number;
+  data: number[]; // 진폭 엔벨로프 0..1
 }
 
-// 캔버스에 파형(중앙선 기준 대칭 채움)을 그린다.
-export function Waveform({ data, duration }: Props) {
+export function Waveform({ data }: Props) {
   const ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -22,8 +21,7 @@ export function Waveform({ data, duration }: Props) {
     ctx.clearRect(0, 0, w, h);
 
     const mid = h / 2;
-    // 중앙선
-    ctx.strokeStyle = "rgba(255,255,255,0.08)";
+    ctx.strokeStyle = "rgba(255,255,255,0.06)";
     ctx.beginPath();
     ctx.moveTo(0, mid);
     ctx.lineTo(w, mid);
@@ -31,18 +29,20 @@ export function Waveform({ data, duration }: Props) {
 
     if (!data.length) return;
     const n = data.length;
-    ctx.fillStyle = "rgba(45, 212, 191, 0.85)"; // primary(teal)
+    const grad = ctx.createLinearGradient(0, 0, 0, h);
+    grad.addColorStop(0, "rgba(20, 224, 184, 0.95)");
+    grad.addColorStop(0.5, "rgba(20, 224, 184, 0.55)");
+    grad.addColorStop(1, "rgba(20, 224, 184, 0.95)");
+    ctx.fillStyle = grad;
     ctx.beginPath();
     ctx.moveTo(0, mid);
     for (let x = 0; x < w; x++) {
-      const i = Math.floor((x / w) * n);
-      const v = data[Math.min(i, n - 1)];
-      ctx.lineTo(x, mid - v * mid * 0.95);
+      const v = data[Math.min(Math.floor((x / w) * n), n - 1)];
+      ctx.lineTo(x, mid - v * mid * 0.92);
     }
     for (let x = w - 1; x >= 0; x--) {
-      const i = Math.floor((x / w) * n);
-      const v = data[Math.min(i, n - 1)];
-      ctx.lineTo(x, mid + v * mid * 0.95);
+      const v = data[Math.min(Math.floor((x / w) * n), n - 1)];
+      ctx.lineTo(x, mid + v * mid * 0.92);
     }
     ctx.closePath();
     ctx.fill();
@@ -51,9 +51,12 @@ export function Waveform({ data, duration }: Props) {
   return (
     <div className="relative h-full w-full">
       <canvas ref={ref} className="h-full w-full" />
-      <span className="absolute bottom-1 right-2 text-[10px] text-muted-foreground">
-        {duration.toFixed(1)}s
-      </span>
+      {!data.length && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-muted-foreground/40">
+          <AudioLines className="h-7 w-7" />
+          <span className="text-xs">녹음하면 파형이 표시됩니다</span>
+        </div>
+      )}
     </div>
   );
 }

@@ -4,22 +4,37 @@
 
 @layer base {
   :root {
-    --background: 222 24% 9%;
-    --foreground: 210 20% 92%;
-    --card: 222 20% 12%;
-    --card-foreground: 210 20% 92%;
-    --primary: 168 76% 45%;
-    --primary-foreground: 222 47% 11%;
-    --secondary: 222 16% 18%;
-    --secondary-foreground: 210 20% 92%;
-    --muted: 222 16% 16%;
-    --muted-foreground: 215 14% 58%;
-    --accent: 262 60% 60%;
+    /* Pro Audio / DAW 다크 — 짙은 차콜 + 네온 틸 */
+    --background: 220 22% 6%;
+    --foreground: 210 18% 90%;
+
+    --card: 220 18% 9%;
+    --card-foreground: 210 18% 90%;
+    --popover: 220 16% 13%;
+    --popover-foreground: 210 18% 92%;
+
+    --primary: 168 84% 48%; /* 네온 틸 */
+    --primary-foreground: 220 30% 8%;
+    --secondary: 220 14% 16%;
+    --secondary-foreground: 210 18% 90%;
+    --muted: 220 14% 14%;
+    --muted-foreground: 215 12% 56%;
+    --accent: 258 70% 66%; /* 바이올렛 */
     --accent-foreground: 210 20% 98%;
-    --border: 222 14% 20%;
-    --input: 222 14% 20%;
-    --ring: 168 76% 45%;
-    --radius: 0.75rem;
+
+    --success: 152 70% 45%;
+    --warning: 38 95% 55%;
+    --danger: 358 75% 58%;
+
+    --border: 220 12% 17%;
+    --input: 220 12% 17%;
+    --ring: 168 84% 48%;
+    --radius: 0.6rem;
+
+    /* 레벨미터 그라데이션 존 */
+    --level-low: 152 70% 45%;
+    --level-mid: 45 95% 55%;
+    --level-high: 358 80% 58%;
   }
 
   * {
@@ -30,6 +45,20 @@
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
     -webkit-font-smoothing: antialiased;
+    /* 깊이감을 주는 미묘한 라디얼 (DAW 패널 느낌) */
+    background-image: radial-gradient(
+      1200px 600px at 70% -10%,
+      hsl(168 60% 12% / 0.18),
+      transparent 60%
+    );
+    background-attachment: fixed;
+  }
+}
+
+@layer utilities {
+  .num {
+    font-variant-numeric: tabular-nums;
+    font-family: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", monospace;
   }
 }
 
@@ -41,6 +70,9 @@
 ::-webkit-scrollbar-thumb {
   background: hsl(var(--border));
   border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(220 12% 24%);
 }
 ::-webkit-scrollbar-track {
   background: transparent;

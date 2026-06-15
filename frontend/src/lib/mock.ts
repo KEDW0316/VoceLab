@@ -53,8 +53,8 @@ export function mockWaveform(n = 600): number[] {
   for (let i = 0; i < n; i++) {
     const t = i / n;
     const env = Math.sin(Math.PI * t); // 페이드 인/아웃
-    const vib = Math.sin(2 * Math.PI * 5.5 * t * 6);
-    out.push(env * (0.6 + 0.4 * vib) * Math.sin(2 * Math.PI * 60 * t) );
+    const vib = 0.5 + 0.5 * Math.abs(Math.sin(2 * Math.PI * 5.5 * t * 6));
+    out.push(Math.min(1, env * vib)); // 0..1 진폭 엔벨로프
   }
   return out;
 }

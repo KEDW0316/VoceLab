@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { Waves } from "lucide-react";
 
 interface Props {
   data: number[][]; // [freq][time], 0..1
@@ -70,5 +71,15 @@ export function Spectrogram({ data }: Props) {
     ctx.drawImage(off, 0, 0, w, h);
   }, [data]);
 
-  return <canvas ref={ref} className="h-full w-full" />;
+  return (
+    <div className="relative h-full w-full">
+      <canvas ref={ref} className="h-full w-full" />
+      {!data.length && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-muted-foreground/40">
+          <Waves className="h-7 w-7" />
+          <span className="text-xs">녹음하면 스펙트로그램이 표시됩니다</span>
+        </div>
+      )}
+    </div>
+  );
 }

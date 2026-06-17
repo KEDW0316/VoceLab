@@ -25,7 +25,7 @@ export function Transport({
   onRecordToggle, onPlay, onStop, onFeedbackChange,
 }: Props) {
   return (
-    <div className="rounded-lg border border-border bg-card px-4 py-3">
+    <div className="vl-card px-4 py-3">
       {/* 입력 레벨미터 */}
       <div className="mb-3 flex items-center gap-2">
         <span className="text-[11px] uppercase tracking-wide text-muted-foreground">IN</span>
@@ -42,8 +42,8 @@ export function Transport({
             onClick={onRecordToggle}
             className={`flex h-20 w-20 items-center justify-center rounded-full border-2 transition-all active:scale-95 ${
               recording
-                ? "border-danger bg-danger/20 shadow-lg shadow-danger/30"
-                : "border-danger/70 bg-danger/90 hover:bg-danger shadow-lg shadow-danger/20"
+                ? "border-danger bg-danger/20 shadow-md shadow-danger/20"
+                : "border-danger/70 bg-danger/90 hover:bg-danger shadow-md shadow-danger/15"
             }`}
             title={recording ? "녹음 정지" : "녹음 시작 (Space)"}
           >
@@ -65,8 +65,8 @@ export function Transport({
             disabled={!canPlay}
             className={`flex h-20 w-20 items-center justify-center rounded-full border-2 transition-all active:scale-95 disabled:opacity-30 ${
               playing
-                ? "border-primary bg-primary/20 shadow-lg shadow-primary/30"
-                : "border-primary/70 bg-primary/90 text-primary-foreground hover:bg-primary shadow-lg shadow-primary/20"
+                ? "border-primary bg-primary/20 shadow-md shadow-primary/20"
+                : "border-primary/70 bg-primary/90 text-primary-foreground hover:bg-primary shadow-md shadow-primary/15"
             }`}
             title={playing ? "정지" : "방금 녹음 재생"}
           >

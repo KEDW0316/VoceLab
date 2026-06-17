@@ -27,17 +27,15 @@ export function SessionBar({
   sessions, currentId, baselineId, onLoad, onPlay, onDelete, onSetBaseline,
 }: Props) {
   return (
-    <div className="rounded-lg border border-border bg-card p-2">
-      <div className="mb-1.5 flex items-center gap-1.5 px-1 text-xs font-semibold text-muted-foreground">
+    <div className="vl-card p-3">
+      <div className="mb-1.5 vl-head">
         <History className="h-3.5 w-3.5" /> 기록
         <span className="font-normal text-muted-foreground/60">
           ({sessions.length}) · ★=비교 기준
         </span>
       </div>
       {sessions.length === 0 ? (
-        <p className="px-1 py-2 text-xs text-muted-foreground/70">
-          녹음하면 자동으로 여기에 저장됩니다.
-        </p>
+        <p className="px-1 py-1.5 vl-label">녹음하면 자동으로 여기에 저장됩니다.</p>
       ) : (
         <div className="flex gap-2 overflow-x-auto pb-1">
           {sessions.map((s) => {
@@ -54,16 +52,14 @@ export function SessionBar({
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="num text-[10px] text-muted-foreground">{time(s.created_at)}</span>
-                  {isBaseline && (
-                    <Star className="h-3 w-3 fill-warning text-warning" />
-                  )}
+                  <span className="num text-[11px] text-muted-foreground">{time(s.created_at)}</span>
+                  {isBaseline && <Star className="h-3 w-3 fill-primary text-primary" />}
                 </div>
                 <div className="truncate text-[11px] text-foreground/90">
                   {s.label || "무제"}
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-[9px] text-muted-foreground">CPPS</span>
+                  <span className="text-[11px] text-muted-foreground">CPPS</span>
                   <span
                     className="num text-sm font-semibold"
                     style={{ color: STATUS_COLOR[s.cpps_status] }}
@@ -78,7 +74,7 @@ export function SessionBar({
                     <Play className="h-3.5 w-3.5 text-muted-foreground hover:text-primary" />
                   </button>
                   <button onClick={(e) => { e.stopPropagation(); onSetBaseline(s.id); }} title="비교 기준 설정" className="rounded p-0.5 hover:bg-secondary">
-                    <Star className={`h-3.5 w-3.5 ${isBaseline ? "fill-warning text-warning" : "text-muted-foreground hover:text-warning"}`} />
+                    <Star className={`h-3.5 w-3.5 ${isBaseline ? "fill-primary text-primary" : "text-muted-foreground hover:text-primary"}`} />
                   </button>
                   <button onClick={(e) => { e.stopPropagation(); onDelete(s.id); }} title="삭제" className="ml-auto rounded p-0.5 hover:bg-secondary">
                     <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-danger" />

@@ -8,16 +8,13 @@ interface PanelProps extends Omit<React.HTMLAttributes<HTMLDivElement>, "title">
   bodyClassName?: string;
 }
 
-// 제목 헤더 + 본문을 가진 표준 패널(카드).
+// 제목 헤더 + 본문을 가진 표준 패널. 모든 패널이 동일한 카드/헤더 언어를 쓴다.
 export function Panel({ title, icon, right, children, className, bodyClassName, ...props }: PanelProps) {
   return (
-    <div
-      className={cn("flex flex-col overflow-hidden rounded-lg border border-border bg-card", className)}
-      {...props}
-    >
+    <div className={cn("vl-card flex flex-col overflow-hidden", className)} {...props}>
       {(title || right) && (
         <div className="flex items-center justify-between border-b border-border px-3 py-2">
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+          <div className="vl-head">
             {icon}
             {title}
           </div>

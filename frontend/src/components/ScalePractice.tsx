@@ -48,10 +48,10 @@ export function ScalePractice() {
   };
 
   return (
-    <div className="rounded-lg border border-border bg-card p-3">
+    <div className="vl-card p-3">
       <div className="flex flex-wrap items-center gap-2">
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
-          <Music2 className="h-4 w-4 text-accent" />
+        <div className="vl-head">
+          <Music2 className="h-3.5 w-3.5" />
           스케일 연습
         </div>
 
@@ -70,7 +70,7 @@ export function ScalePractice() {
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => transpose(-1)} title="반음 내림">
             <ChevronDown className="h-4 w-4" />
           </Button>
-          <span className="num w-9 text-center text-sm font-semibold text-primary">{tonic}</span>
+          <span className="num w-9 text-center text-sm font-semibold">{tonic}</span>
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => transpose(1)} title="반음 올림">
             <ChevronUp className="h-4 w-4" />
           </Button>
@@ -86,22 +86,19 @@ export function ScalePractice() {
           {/* 솔페지 pill */}
           <div className="flex flex-wrap items-center gap-1">
             {scale.glide ? (
-              <span className="rounded bg-secondary px-2 py-0.5 text-xs text-primary">글라이드 ↗↘</span>
+              <span className="rounded-md bg-secondary px-2 py-0.5 text-xs text-foreground">글라이드 ↗↘</span>
             ) : (
               solfege.split(" ").filter(Boolean).map((n, i) => (
-                <span
-                  key={i}
-                  className="num rounded bg-secondary px-1.5 py-0.5 text-xs text-primary"
-                >
+                <span key={i} className="num rounded-md bg-secondary px-1.5 py-0.5 text-xs text-foreground">
                   {n}
                 </span>
               ))
             )}
           </div>
-          <span className="rounded-full border border-border px-2 py-0.5 text-[10px] text-muted-foreground">
+          <span className="rounded-md border border-border px-2 py-0.5 text-[11px] text-muted-foreground">
             음절 {scale.syllable}
           </span>
-          <p className="text-xs text-muted-foreground">{scale.description}</p>
+          <p className="vl-label">{scale.description}</p>
         </div>
       )}
     </div>

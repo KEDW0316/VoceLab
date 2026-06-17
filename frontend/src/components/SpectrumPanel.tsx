@@ -40,10 +40,10 @@ export function SpectrumPanel({ inputIdx, recording }: Props) {
   }, [frozen]);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border bg-card">
-      <div className="flex items-center justify-between border-b border-border px-3 py-1.5">
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
-          <Activity className="h-3.5 w-3.5 text-primary" /> 실시간 스펙트럼
+    <div className="vl-card flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="flex items-center justify-between border-b border-border px-3 py-2">
+        <div className="vl-head">
+          <Activity className="h-3.5 w-3.5" /> 실시간 스펙트럼
         </div>
         <button
           onClick={() => setFrozen((f) => !f)}

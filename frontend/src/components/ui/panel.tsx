@@ -13,7 +13,7 @@ export function Panel({ title, icon, right, children, className, bodyClassName, 
   return (
     <div className={cn("vl-card flex flex-col overflow-hidden", className)} {...props}>
       {(title || right) && (
-        <div className="flex items-center justify-between border-b border-border px-3 py-2">
+        <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-2">
           <div className="vl-head">
             {icon}
             {title}

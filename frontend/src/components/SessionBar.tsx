@@ -45,10 +45,8 @@ export function SessionBar({
               <div
                 key={s.id}
                 onClick={() => onLoad(s.id)}
-                className={`group relative w-[136px] shrink-0 cursor-pointer rounded-md border px-2.5 py-1.5 transition-colors ${
-                  selected
-                    ? "border-primary/60 bg-primary/10"
-                    : "border-border bg-secondary/30 hover:bg-secondary/50"
+                className={`group relative w-[136px] shrink-0 cursor-pointer rounded-md px-2.5 py-1.5 transition-colors ${
+                  selected ? "bg-primary/15" : "bg-secondary/40 hover:bg-secondary/60"
                 }`}
               >
                 <div className="flex items-center justify-between">

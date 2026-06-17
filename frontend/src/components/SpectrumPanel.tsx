@@ -41,7 +41,7 @@ export function SpectrumPanel({ inputIdx, recording }: Props) {
 
   return (
     <div className="vl-card flex min-h-0 flex-1 flex-col overflow-hidden">
-      <div className="flex items-center justify-between border-b border-border px-3 py-2">
+      <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-2">
         <div className="vl-head">
           <Activity className="h-3.5 w-3.5" /> 실시간 스펙트럼
         </div>

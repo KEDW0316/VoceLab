@@ -66,7 +66,7 @@ export function ScalePractice() {
         </div>
 
         {/* 키 트랜스포즈 */}
-        <div className="flex items-center gap-1 rounded-md border border-border bg-secondary/40 p-1">
+        <div className="flex items-center gap-1 rounded-md bg-secondary/60 p-1">
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => transpose(-1)} title="반음 내림">
             <ChevronDown className="h-4 w-4" />
           </Button>

@@ -218,6 +218,7 @@ export default function App() {
 
       <Transport
         recording={recording}
+        playing={playing}
         canPlay={!!result}
         feedback={feedback}
         level={level}

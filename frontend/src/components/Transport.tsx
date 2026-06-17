@@ -1,9 +1,9 @@
-import { Circle, Play, RotateCcw, Square } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Circle, Play, Square, RotateCcw } from "lucide-react";
 import { LevelMeter } from "./LevelMeter";
 
 interface Props {
   recording: boolean;
+  playing: boolean;
   canPlay: boolean;
   feedback: boolean;
   level: number; // 0..1
@@ -21,60 +21,78 @@ function fmt(s: number) {
 }
 
 export function Transport({
-  recording, canPlay, feedback, level, elapsed,
+  recording, playing, canPlay, feedback, level, elapsed,
   onRecordToggle, onPlay, onStop, onFeedbackChange,
 }: Props) {
   return (
-    <div className="flex items-center gap-4 rounded-lg border border-border bg-card px-4 py-3">
-      {/* 녹음 */}
-      <Button
-        variant={recording ? "destructive" : "default"}
-        size="lg"
-        onClick={onRecordToggle}
-        className="min-w-[140px] shadow-lg shadow-primary/10"
-      >
-        <Circle className={`h-3.5 w-3.5 fill-current ${recording ? "animate-pulse" : ""}`} />
-        {recording ? "정지" : "녹음"}
-      </Button>
-
-      {/* 경과 시간 */}
-      <span
-        className={`num w-14 text-lg ${recording ? "text-danger" : "text-muted-foreground"}`}
-      >
-        {fmt(elapsed)}
-      </span>
-
-      <div className="h-8 w-px bg-border" />
-
-      {/* 재생 트랜스포트 */}
-      <Button variant="secondary" onClick={onPlay} disabled={!canPlay}>
-        <Play className="h-4 w-4" /> 재생
-      </Button>
-      <Button variant="outline" size="icon" onClick={onStop} title="정지">
-        <Square className="h-4 w-4" />
-      </Button>
-
-      {/* 레벨미터 */}
-      <div className="flex flex-1 items-center gap-2">
-        <span className="text-[11px] uppercase tracking-wide text-muted-foreground">in</span>
+    <div className="rounded-lg border border-border bg-card px-4 py-3">
+      {/* 입력 레벨미터 */}
+      <div className="mb-3 flex items-center gap-2">
+        <span className="text-[11px] uppercase tracking-wide text-muted-foreground">IN</span>
         <div className="flex-1">
           <LevelMeter level={level} />
         </div>
+        {recording && <span className="num text-sm text-danger">{fmt(elapsed)}</span>}
       </div>
 
-      {/* 피드백 모드 토글 */}
-      <button
-        onClick={() => onFeedbackChange(!feedback)}
-        className={`flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs transition-colors ${
-          feedback
-            ? "border-primary/50 bg-primary/10 text-primary"
-            : "border-border text-muted-foreground hover:bg-secondary/60"
-        }`}
-        title="켜면 녹음 정지 즉시 방금 녹음을 반복 재생합니다(귀 훈련)."
-      >
-        <RotateCcw className="h-3.5 w-3.5" />
-        피드백 모드
-      </button>
+      <div className="flex items-center justify-center gap-8">
+        {/* 녹음 (가장 큼) */}
+        <div className="flex flex-col items-center gap-1.5">
+          <button
+            onClick={onRecordToggle}
+            className={`flex h-20 w-20 items-center justify-center rounded-full border-2 transition-all active:scale-95 ${
+              recording
+                ? "border-danger bg-danger/20 shadow-lg shadow-danger/30"
+                : "border-danger/70 bg-danger/90 hover:bg-danger shadow-lg shadow-danger/20"
+            }`}
+            title={recording ? "녹음 정지" : "녹음 시작 (Space)"}
+          >
+            {recording ? (
+              <Square className="h-7 w-7 fill-danger text-danger" />
+            ) : (
+              <Circle className="h-9 w-9 fill-white text-white" />
+            )}
+          </button>
+          <span className={`text-xs font-medium ${recording ? "text-danger" : "text-foreground"}`}>
+            {recording ? "녹음 중…" : "녹음"}
+          </span>
+        </div>
+
+        {/* 재생 / 정지 토글 */}
+        <div className="flex flex-col items-center gap-1.5">
+          <button
+            onClick={playing ? onStop : onPlay}
+            disabled={!canPlay}
+            className={`flex h-20 w-20 items-center justify-center rounded-full border-2 transition-all active:scale-95 disabled:opacity-30 ${
+              playing
+                ? "border-primary bg-primary/20 shadow-lg shadow-primary/30"
+                : "border-primary/70 bg-primary/90 text-primary-foreground hover:bg-primary shadow-lg shadow-primary/20"
+            }`}
+            title={playing ? "정지" : "방금 녹음 재생"}
+          >
+            {playing ? (
+              <Square className="h-7 w-7 fill-primary text-primary" />
+            ) : (
+              <Play className="h-9 w-9 fill-current" />
+            )}
+          </button>
+          <span className="text-xs font-medium text-foreground">{playing ? "정지" : "재생"}</span>
+        </div>
+
+        {/* 피드백 반복재생 (보조 토글) */}
+        <button
+          onClick={() => onFeedbackChange(!feedback)}
+          className={`ml-2 flex items-center gap-1.5 self-center rounded-md border px-3 py-1.5 text-xs transition-colors ${
+            feedback
+              ? "border-primary/50 bg-primary/10 text-primary"
+              : "border-border text-muted-foreground hover:bg-secondary/60"
+          }`}
+          title="켜면 녹음을 멈추는 즉시 방금 녹음을 반복 재생합니다."
+        >
+          <RotateCcw className="h-3.5 w-3.5" />
+          반복
+        </button>
+      </div>
     </div>
   );
 }

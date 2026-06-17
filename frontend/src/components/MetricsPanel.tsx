@@ -44,9 +44,9 @@ function Card({ m, base }: { m: Metric; base?: number | null }) {
         <span className="vl-label">{m.label}</span>
         {delta && <span className="num ml-auto text-[11px]" style={{ color: deltaColor }}>{delta}</span>}
       </div>
-      <div className="flex items-baseline gap-1">
-        <span className="num text-xl font-semibold leading-none" style={{ color }}>{fmt(m.value)}</span>
-        <span className="text-[11px] text-muted-foreground">{m.unit}</span>
+      <div className="flex items-baseline whitespace-nowrap">
+        <span className="num text-[22px] font-semibold leading-none" style={{ color }}>{fmt(m.value)}</span>
+        <span className="ms-0.5 text-[11px] text-muted-foreground">{m.unit}</span>
       </div>
     </div>
   );

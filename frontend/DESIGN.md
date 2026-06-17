@@ -41,6 +41,15 @@ CSS 변수는 `src/index.css`의 `:root`에 정의. Tailwind 토큰으로만 참
 - 레벨미터는 green/amber/red 존으로 입력 과다(클리핑)를 시각적으로 경고.
 - 키보드: 스페이스바로 녹음 토글(입력 포커스 아닐 때).
 
+## 채택한 외부 규칙 (StyleSeed)
+[bitjaru/styleseed](https://github.com/bitjaru/styleseed)의 "디자인 판단" 규칙 중 우리
+다크 UI에 맞는 것을 적용했다:
+- 액센트 1개(틸) + 나머지는 회색조. 상태색은 작은 영역(지표·녹음)에만.
+- **섀도우는 거의 안 보이게**(불투명도 4–12%). 컬러 글로우 지양.
+- **숫자 : 단위 = 약 2:1** 비율, `whitespace-nowrap`로 줄바꿈 방지.
+- 본문/설명에 `leading-snug`. 카드가 배경보다 밝게.
+- 순수 검정(#000)·무지개 액센트·과한 그림자 금지.
+
 ## 작업 루프 (셀프 리뷰)
 1. 변경 → `npm run build`
 2. QtWebEngine 오프스크린으로 스크린샷 캡처

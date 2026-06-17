@@ -98,7 +98,7 @@ export function ScalePractice() {
           <span className="rounded-md border border-border px-2 py-0.5 text-[11px] text-muted-foreground">
             음절 {scale.syllable}
           </span>
-          <p className="vl-label">{scale.description}</p>
+          <p className="vl-label leading-snug">{scale.description}</p>
         </div>
       )}
     </div>

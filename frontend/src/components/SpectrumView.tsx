@@ -59,22 +59,25 @@ export function SpectrumView({ freqs, db, floor = -100 }: Props) {
       ctx.fillText(`${gd}`, 3, y - 2);
     }
 
-    // 곡선 + 채움
+    // 막대(기둥) 분석기 — 데이터를 N개 막대로 묶어 각 구간의 피크 dB로 그린다.
+    const N = Math.min(64, freqs.length);
+    const per = freqs.length / N;
     const grad = ctx.createLinearGradient(0, 0, 0, h);
-    grad.addColorStop(0, "rgba(20, 224, 184, 0.55)");
-    grad.addColorStop(1, "rgba(20, 224, 184, 0.04)");
-    ctx.beginPath();
-    ctx.moveTo(xOf(freqs[0]), yOf(db[0]));
-    for (let i = 1; i < freqs.length; i++) ctx.lineTo(xOf(freqs[i]), yOf(db[i]));
-    ctx.strokeStyle = "rgba(45, 212, 191, 0.95)";
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-    // 아래로 채우기
-    ctx.lineTo(xOf(fmax), h);
-    ctx.lineTo(xOf(fmin), h);
-    ctx.closePath();
+    grad.addColorStop(0, "rgba(94, 234, 212, 1)");   // 위(강): 밝은 틸
+    grad.addColorStop(0.5, "rgba(20, 224, 184, 0.95)");
+    grad.addColorStop(1, "rgba(13, 148, 136, 0.5)"); // 아래: 어두운 틸
     ctx.fillStyle = grad;
-    ctx.fill();
+    const slot = w / N;
+    const gap = Math.max(1, slot * 0.18);
+    const barW = slot - gap;
+    for (let i = 0; i < N; i++) {
+      let peak = floor;
+      const s = Math.floor(i * per);
+      const e = Math.max(s + 1, Math.floor((i + 1) * per));
+      for (let j = s; j < e && j < db.length; j++) peak = Math.max(peak, db[j]);
+      const y = yOf(peak);
+      ctx.fillRect(i * slot + gap / 2, y, barW, h - y);
+    }
   }, [freqs, db, floor]);
 
   return (

@@ -8,7 +8,7 @@ import { Panel } from "@/components/ui/panel";
 import { Header } from "@/components/Header";
 import { DeviceBar } from "@/components/DeviceBar";
 import { Waveform } from "@/components/Waveform";
-import { VizTabs } from "@/components/VizTabs";
+import { SpectrumPanel } from "@/components/SpectrumPanel";
 import { MetricsPanel } from "@/components/MetricsPanel";
 import { ScalePractice } from "@/components/ScalePractice";
 import { SessionBar } from "@/components/SessionBar";
@@ -176,33 +176,36 @@ export default function App() {
   }, [onRecordToggle]);
 
   return (
-    <div className="flex h-screen flex-col gap-3 p-4">
+    <div className="flex h-screen flex-col gap-2 p-3">
       <Header recording={recording} status={status} />
       <DeviceBar onInputChange={setInputIdx} onOutputChange={setOutputIdx} />
 
-      <div className="grid min-h-0 flex-1 grid-cols-[1fr_360px] gap-3">
-        <div className="flex min-h-0 flex-col gap-3">
-          <Panel
-            title="파형"
-            icon={<AudioLines className="h-3.5 w-3.5" />}
-            right={result ? `${result.duration.toFixed(1)}s` : undefined}
-            className="h-[36%]"
-            bodyClassName="p-2"
-          >
-            <Waveform
-              data={result?.waveform ?? []}
-              duration={result?.duration ?? 0}
-              startSec={playhead}
-              playing={playing}
-              loop={feedback}
-              onSeek={playFrom}
-            />
-          </Panel>
-          <VizTabs spectrogram={result?.spectrogram ?? []} inputIdx={inputIdx} recording={recording} />
-        </div>
-        <MetricsPanel metrics={result?.metrics ?? []} baseline={baseline} />
-      </div>
+      {/* 파형 (컴팩트) */}
+      <Panel
+        title="파형"
+        icon={<AudioLines className="h-3.5 w-3.5" />}
+        right={result ? `${result.duration.toFixed(1)}s` : undefined}
+        className="h-[88px] shrink-0"
+        bodyClassName="p-1.5"
+      >
+        <Waveform
+          data={result?.waveform ?? []}
+          duration={result?.duration ?? 0}
+          startSec={playhead}
+          playing={playing}
+          loop={feedback}
+          onSeek={playFrom}
+        />
+      </Panel>
 
+      {/* 실시간 스펙트럼(EQ) — 메인 비주얼, 남는 공간 채움 */}
+      <SpectrumPanel inputIdx={inputIdx} recording={recording} />
+
+      {/* 핵심 지표 (한 줄) */}
+      <MetricsPanel metrics={result?.metrics ?? []} baseline={baseline} />
+
+      {/* 스케일 연습 / 기록 (컴팩트) */}
+      <ScalePractice />
       <SessionBar
         sessions={sessions}
         currentId={currentId}
@@ -212,8 +215,6 @@ export default function App() {
         onDelete={deleteSession}
         onSetBaseline={setBaselineSession}
       />
-
-      <ScalePractice />
 
       <Transport
         recording={recording}

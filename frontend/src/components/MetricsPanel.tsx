@@ -1,17 +1,8 @@
-import { FileText, BarChart3 } from "lucide-react";
 import type { Metric } from "@/lib/types";
 
-const CATEGORY_ORDER = ["음질", "음높이", "공명·음색", "비브라토"];
+// 핵심 지표만 (요청: CPPS·HNR·지터·쉬머). 한 줄 컴팩트 카드.
+const CORE = ["cpps", "hnr", "jitter", "shimmer"];
 
-// 카테고리별 액센트 색 (좌측 스트라이프/점)
-const CATEGORY_COLOR: Record<string, string> = {
-  음질: "hsl(var(--primary))",
-  음높이: "hsl(var(--accent))",
-  "공명·음색": "hsl(200 80% 55%)",
-  비브라토: "hsl(var(--warning))",
-};
-
-// 해석 상태 색 (값 텍스트·상태 점)
 const STATUS_COLOR: Record<Metric["status"], string> = {
   good: "hsl(var(--success))",
   watch: "hsl(var(--warning))",
@@ -25,94 +16,39 @@ const STATUS_LABEL: Record<Metric["status"], string> = {
   info: "정보",
 };
 
-function groupByCategory(metrics: Metric[]) {
-  const map = new Map<string, Metric[]>();
-  for (const m of metrics) {
-    if (!map.has(m.category)) map.set(m.category, []);
-    map.get(m.category)!.push(m);
+function fmt(v: number | null): string {
+  if (v === null) return "—";
+  const a = Math.abs(v);
+  return a >= 100 ? Math.round(v).toString() : a >= 10 ? v.toFixed(1) : v.toFixed(2);
+}
+
+function Card({ m, base }: { m: Metric; base?: number | null }) {
+  const color = STATUS_COLOR[m.status];
+  const tip = [m.description, m.normal && `정상/참고: ${m.normal}`].filter(Boolean).join("\n\n");
+  let delta: string | null = null;
+  let deltaColor = "hsl(var(--muted-foreground))";
+  if (base != null && m.value != null) {
+    const d = m.value - base;
+    if (Math.abs(d) >= 0.01) {
+      const improved = m.better === "high" ? d > 0 : m.better === "low" ? d < 0 : null;
+      deltaColor =
+        improved === null ? deltaColor : improved ? "hsl(var(--success))" : "hsl(var(--danger))";
+      delta = `${d > 0 ? "▲" : "▼"}${Math.abs(d) >= 10 ? Math.abs(d).toFixed(0) : Math.abs(d).toFixed(1)}`;
+    }
   }
-  return [...map.entries()].sort(
-    (a, b) => CATEGORY_ORDER.indexOf(a[0]) - CATEGORY_ORDER.indexOf(b[0])
-  );
-}
-
-// 카드 폭에 맞게 자릿수를 줄인다(큰 Hz 값은 정수, 작은 값은 소수).
-function fmtValue(m: Metric): string {
-  if (m.value === null) return "—";
-  const a = Math.abs(m.value);
-  if (a >= 100) return Math.round(m.value).toString();
-  if (a >= 10) return m.value.toFixed(1);
-  return m.value.toFixed(2);
-}
-
-// 전/후 비교 델타: 기준값 대비 변화량 + 개선 여부 색.
-function DeltaBadge({ m, base }: { m: Metric; base: number }) {
-  if (m.value === null) return null;
-  const d = m.value - base;
-  if (Math.abs(d) < 1e-6) return <span className="text-[9px] text-muted-foreground">±0</span>;
-  const improved = m.better === "high" ? d > 0 : m.better === "low" ? d < 0 : null;
-  const color =
-    improved === null
-      ? "hsl(var(--muted-foreground))"
-      : improved
-        ? "hsl(var(--success))"
-        : "hsl(var(--danger))";
-  const sign = d > 0 ? "+" : "";
-  return (
-    <span className="num text-[9px]" style={{ color }} title="비교 기준 대비">
-      {d > 0 ? "▲" : "▼"} {sign}
-      {Math.abs(d) >= 100 ? Math.round(d) : d.toFixed(Math.abs(d) >= 10 ? 1 : 2)}
-    </span>
-  );
-}
-
-function MetricCard({ m, base }: { m: Metric; base?: number | null }) {
-  const accent = CATEGORY_COLOR[m.category] ?? "hsl(var(--primary))";
-  const statusColor = STATUS_COLOR[m.status];
-  const rated = m.status !== "info";
-  const tip = [
-    m.description,
-    m.note && `→ ${STATUS_LABEL[m.status]}: ${m.note}`,
-    m.normal && `정상/참고: ${m.normal}`,
-    m.reference && `출처: ${m.reference.title}`,
-  ]
-    .filter(Boolean)
-    .join("\n\n");
   return (
     <div
-      className="group relative overflow-hidden rounded-md border border-border/70 bg-secondary/20 pl-3 pr-3 py-2 transition-colors hover:border-border hover:bg-secondary/40"
+      className="flex flex-1 flex-col gap-0.5 rounded-md border border-border/70 bg-secondary/20 px-3 py-1.5"
       title={tip}
     >
-      <span className="absolute inset-y-0 left-0 w-[3px]" style={{ background: accent, opacity: 0.7 }} />
-      <div className="flex items-center justify-between">
-        <span className="text-[11px] font-medium text-muted-foreground">{m.label}</span>
-        <div className="flex items-center gap-1">
-          {rated && (
-            <span
-              className="h-1.5 w-1.5 rounded-full"
-              style={{ background: statusColor, boxShadow: `0 0 5px ${statusColor}` }}
-              title={STATUS_LABEL[m.status]}
-            />
-          )}
-          {m.reference && (
-            <a
-              href={m.reference.url}
-              target="_blank"
-              rel="noreferrer"
-              className="text-muted-foreground/50 transition-colors hover:text-primary"
-              title={`출처: ${m.reference.title}`}
-            >
-              <FileText className="h-3 w-3" />
-            </a>
-          )}
-        </div>
+      <div className="flex items-center gap-1">
+        <span className="h-1.5 w-1.5 rounded-full" style={{ background: color }} title={STATUS_LABEL[m.status]} />
+        <span className="text-[11px] text-muted-foreground">{m.label}</span>
+        {delta && <span className="num ml-auto text-[10px]" style={{ color: deltaColor }}>{delta}</span>}
       </div>
       <div className="flex items-baseline gap-1">
-        <span className="num text-[18px] font-semibold leading-tight" style={{ color: statusColor }}>
-          {fmtValue(m)}
-        </span>
+        <span className="num text-lg font-semibold leading-none" style={{ color }}>{fmt(m.value)}</span>
         <span className="text-[10px] text-muted-foreground">{m.unit}</span>
-        {base != null && <span className="ml-auto"><DeltaBadge m={m} base={base} /></span>}
       </div>
     </div>
   );
@@ -125,60 +61,16 @@ export function MetricsPanel({
   metrics: Metric[];
   baseline?: Record<string, number | null> | null;
 }) {
-  const groups = groupByCategory(metrics);
+  const core = CORE.map((k) => metrics.find((m) => m.key === k)).filter(Boolean) as Metric[];
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-lg border border-border bg-card">
-      <div className="border-b border-border px-4 py-3">
-        <div className="flex items-center gap-2">
-          <BarChart3 className="h-4 w-4 text-primary" />
-          <h2 className="text-sm font-semibold leading-none">음향 지표</h2>
+    <div className="flex gap-2">
+      {core.length === 0 ? (
+        <div className="flex-1 rounded-md border border-border/60 bg-secondary/10 px-3 py-2 text-center text-[11px] text-muted-foreground">
+          녹음하면 핵심 음향 지표(CPPS·HNR·지터·쉬머)가 표시됩니다.
         </div>
-        <div className="mt-2 flex items-center gap-3 text-[10px] text-muted-foreground">
-          {(["good", "watch", "poor"] as const).map((s) => (
-            <span key={s} className="flex items-center gap-1">
-              <span
-                className="h-1.5 w-1.5 rounded-full"
-                style={{ background: STATUS_COLOR[s] }}
-              />
-              {STATUS_LABEL[s]}
-            </span>
-          ))}
-          <span className="ml-auto opacity-70">
-            {baseline ? "Δ = 비교 기준 대비" : "호버 = 설명·출처"}
-          </span>
-        </div>
-      </div>
-      <div className="flex-1 space-y-4 overflow-y-auto p-3">
-        {metrics.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center gap-2 px-4 text-center">
-            <BarChart3 className="h-8 w-8 text-muted-foreground/30" />
-            <p className="text-xs text-muted-foreground">
-              녹음하면 14개 음향 지표가
-              <br />
-              여기에 표시됩니다.
-            </p>
-          </div>
-        ) : (
-          groups.map(([category, items]) => (
-            <div key={category} className="space-y-1.5">
-              <div className="flex items-center gap-1.5 px-0.5">
-                <span
-                  className="h-2 w-2 rounded-full"
-                  style={{ background: CATEGORY_COLOR[category] }}
-                />
-                <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  {category}
-                </h3>
-              </div>
-              <div className="grid grid-cols-2 gap-1.5">
-                {items.map((m) => (
-                  <MetricCard key={m.key} m={m} base={baseline ? baseline[m.key] : undefined} />
-                ))}
-              </div>
-            </div>
-          ))
-        )}
-      </div>
+      ) : (
+        core.map((m) => <Card key={m.key} m={m} base={baseline ? baseline[m.key] : undefined} />)
+      )}
     </div>
   );
 }

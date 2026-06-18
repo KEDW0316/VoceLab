@@ -15,7 +15,6 @@ export function ScalePractice() {
   const [scales, setScales] = useState<Scale[]>([]);
   const [scaleKey, setScaleKey] = useState("");
   const [tonic, setTonic] = useState(() => loadPref("tonic") || "C4");
-  const [solfege, setSolfege] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -46,10 +45,8 @@ export function ScalePractice() {
   }, [tonic]);
 
   const scale = scales.find((s) => s.key === scaleKey);
-
-  useEffect(() => {
-    if (scaleKey) api.solfege_for(scaleKey, tonic).then(setSolfege);
-  }, [scaleKey, tonic]);
+  // 솔페지는 이동도(movable-do)라 토닉과 무관 — 스케일 데이터의 값을 그대로 사용
+  const solfege = scale?.solfege ?? "";
 
   const transpose = (d: number) => {
     const i = TONICS.indexOf(tonic) + d;

@@ -180,54 +180,56 @@ export default function App() {
       <Header recording={recording} status={status} />
       <DeviceBar onInputChange={setInputIdx} onOutputChange={setOutputIdx} />
 
-      {/* 파형 (컴팩트) */}
-      <Panel
-        title="파형"
-        icon={<AudioLines className="h-3.5 w-3.5" />}
-        right={result ? `${result.duration.toFixed(1)}s` : undefined}
-        className="h-[88px] shrink-0"
-        bodyClassName="p-1.5"
-      >
-        <Waveform
-          data={result?.waveform ?? []}
-          duration={result?.duration ?? 0}
-          startSec={playhead}
-          playing={playing}
-          loop={feedback}
-          onSeek={playFrom}
-        />
-      </Panel>
+      {/* 2단: 좌(시각화) / 우(컨트롤·연습·기록) */}
+      <div className="grid min-h-0 flex-1 grid-cols-[1fr_minmax(320px,360px)] gap-2">
+        {/* 좌측 — 파형(컴팩트) + 스펙트럼(세로로 길게) + 핵심 지표 */}
+        <div className="flex min-h-0 flex-col gap-2">
+          <Panel
+            title="파형"
+            icon={<AudioLines className="h-3.5 w-3.5" />}
+            right={result ? `${result.duration.toFixed(1)}s` : undefined}
+            className="h-[84px] shrink-0"
+            bodyClassName="p-1.5"
+          >
+            <Waveform
+              data={result?.waveform ?? []}
+              duration={result?.duration ?? 0}
+              startSec={playhead}
+              playing={playing}
+              loop={feedback}
+              onSeek={playFrom}
+            />
+          </Panel>
+          <SpectrumPanel inputIdx={inputIdx} recording={recording} />
+          <MetricsPanel metrics={result?.metrics ?? []} baseline={baseline} />
+        </div>
 
-      {/* 실시간 스펙트럼(EQ) — 메인 비주얼, 남는 공간 채움 */}
-      <SpectrumPanel inputIdx={inputIdx} recording={recording} />
-
-      {/* 핵심 지표 (한 줄) */}
-      <MetricsPanel metrics={result?.metrics ?? []} baseline={baseline} />
-
-      {/* 스케일 연습 / 기록 (컴팩트) */}
-      <ScalePractice />
-      <SessionBar
-        sessions={sessions}
-        currentId={currentId}
-        baselineId={baselineId}
-        onLoad={loadSession}
-        onPlay={(id) => api.play_session(id, feedback)}
-        onDelete={deleteSession}
-        onSetBaseline={setBaselineSession}
-      />
-
-      <Transport
-        recording={recording}
-        playing={playing}
-        canPlay={!!result}
-        feedback={feedback}
-        level={level}
-        elapsed={elapsed}
-        onRecordToggle={onRecordToggle}
-        onPlay={() => playFrom(playhead)}
-        onStop={stopPlay}
-        onFeedbackChange={setFeedback}
-      />
+        {/* 우측 — 녹음/재생, 스케일 연습, 기록 */}
+        <div className="flex min-h-0 flex-col gap-2 overflow-y-auto">
+          <Transport
+            recording={recording}
+            playing={playing}
+            canPlay={!!result}
+            feedback={feedback}
+            level={level}
+            elapsed={elapsed}
+            onRecordToggle={onRecordToggle}
+            onPlay={() => playFrom(playhead)}
+            onStop={stopPlay}
+            onFeedbackChange={setFeedback}
+          />
+          <ScalePractice />
+          <SessionBar
+            sessions={sessions}
+            currentId={currentId}
+            baselineId={baselineId}
+            onLoad={loadSession}
+            onPlay={(id) => api.play_session(id, feedback)}
+            onDelete={deleteSession}
+            onSetBaseline={setBaselineSession}
+          />
+        </div>
+      </div>
     </div>
   );
 }

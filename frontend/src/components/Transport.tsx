@@ -35,7 +35,7 @@ export function Transport({
         {recording && <span className="num text-sm text-danger">{fmt(elapsed)}</span>}
       </div>
 
-      <div className="flex items-center justify-center gap-8">
+      <div className="flex items-center justify-center gap-6">
         {/* 녹음 (가장 큼) */}
         <div className="flex flex-col items-center gap-1.5">
           <button
@@ -78,19 +78,21 @@ export function Transport({
           </button>
           <span className="text-xs font-medium text-foreground">{playing ? "정지" : "재생"}</span>
         </div>
+      </div>
 
-        {/* 피드백 반복재생 (보조 토글) */}
+      {/* 피드백 반복재생 (보조 토글) — 별도 줄 */}
+      <div className="mt-3 flex justify-center">
         <button
           onClick={() => onFeedbackChange(!feedback)}
-          className={`ml-2 flex items-center gap-1.5 self-center rounded-md border px-3 py-1.5 text-xs transition-colors ${
+          className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs transition-colors ${
             feedback
-              ? "border-primary/50 bg-primary/10 text-primary"
-              : "border-border text-muted-foreground hover:bg-secondary/60"
+              ? "bg-primary/10 text-primary"
+              : "text-muted-foreground hover:bg-secondary/60"
           }`}
           title="켜면 녹음을 멈추는 즉시 방금 녹음을 반복 재생합니다."
         >
           <RotateCcw className="h-3.5 w-3.5" />
-          반복
+          반복 재생
         </button>
       </div>
     </div>

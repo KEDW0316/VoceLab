@@ -31,7 +31,7 @@ class AudioEngine:
 
         # 실시간 스펙트럼용 최근 모노 샘플 링버퍼
         self._recent = np.zeros(0, dtype="float32")
-        self._recent_max = 4096
+        self._recent_max = 8192  # 저음 피치 안정화를 위해 ~186ms 보관
 
         self.last_recording: np.ndarray | None = None
 

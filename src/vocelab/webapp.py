@@ -19,7 +19,7 @@ from vocelab.analysis.metrics import VoiceMetrics, to_mono_f64
 from vocelab.analysis.rating import direction, rate
 from vocelab.analysis.references import reference_for
 from vocelab.audio import AudioEngine, input_devices, output_devices
-from vocelab.dsp import detect_pitch, spectrogram_db, spectrum
+from vocelab.dsp import spectrogram_db, spectrum
 from vocelab.scales import SCALES, get_scale
 from vocelab.sessions import SessionStore
 from vocelab.synth import freq_to_note, note_name_to_freq, solfege, synthesize
@@ -187,9 +187,26 @@ class Api:
         return {"freqs": freqs, "db": db}
 
     def get_pitch(self) -> dict:
-        """실시간 음정 — 최근 버퍼에서 F0를 추정해 노트/옥타브/센트로. (녹음·재생·모니터 공통)"""
-        hz = detect_pitch(self.engine.recent_samples(), self.engine.samplerate)
-        if hz is None:
+        """실시간 음정 — Praat(Parselmouth) 자기상관 피치로 F0 추정 후 노트/옥타브/센트.
+
+        Praat 피치는 옥타브 점프 비용을 고려해 단순 자기상관보다 옥타브 에러에 강하다.
+        최근 버퍼(녹음 입력/재생 오디오/마이크 모니터)를 그대로 분석하므로 셋 다 공통.
+        """
+        mono = to_mono_f64(self.engine.recent_samples())
+        sr = self.engine.samplerate
+        if mono.size < int(sr * 0.06):  # 60ms 미만이면 추정 불가
+            return {"hz": None}
+        try:
+            import parselmouth
+
+            snd = parselmouth.Sound(mono, sampling_frequency=sr)
+            pitch = snd.to_pitch(0.01, 65.0, 1000.0)  # (time_step, floor, ceiling)
+            freqs = pitch.selected_array["frequency"]
+            voiced = freqs[freqs > 0]
+            if voiced.size == 0:
+                return {"hz": None}
+            hz = float(np.median(voiced))
+        except Exception:  # noqa: BLE001
             return {"hz": None}
         name, octave, cents = freq_to_note(hz)
         return {"hz": round(hz, 1), "note": name, "octave": octave, "cents": cents}

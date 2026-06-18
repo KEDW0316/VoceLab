@@ -90,3 +90,14 @@ def test_freq_to_note_c4_and_cents():
     # 약간 높은 A4 → +cents
     _, _, cents = freq_to_note(444.0)
     assert cents > 0
+
+
+def test_api_get_pitch_praat(monkeypatch):
+    from vocelab.webapp import Api
+    api = Api()
+    t = np.arange(8192) / SR
+    sig = (0.5 * np.sin(2 * np.pi * 220 * t)).astype("float32")  # 220Hz = A3
+    monkeypatch.setattr(api.engine, "recent_samples", lambda: sig)
+    out = api.get_pitch()
+    assert out["hz"] is not None and abs(out["hz"] - 220) < 4
+    assert out["note"] == "A" and out["octave"] == 3

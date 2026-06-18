@@ -54,3 +54,39 @@ def test_api_get_spectrum_empty_when_no_audio(monkeypatch):
     api = Api()
     monkeypatch.setattr(api.engine, "recent_samples", lambda: np.zeros(0, dtype="float32"))
     assert api.get_spectrum() == {"freqs": [], "db": []}
+
+
+# ---- 실시간 음정 검출 ----------------------------------------------------
+from vocelab.dsp import detect_pitch
+from vocelab.synth import freq_to_note
+
+
+def test_detect_pitch_on_tone():
+    t = np.arange(SR) / SR
+    sig = (0.5 * np.sin(2 * np.pi * 220 * t)).astype("float32")
+    f0 = detect_pitch(sig, SR)
+    assert f0 is not None and abs(f0 - 220) < 3
+
+
+def test_detect_pitch_silence_returns_none():
+    assert detect_pitch(np.zeros(4096, dtype="float32"), SR) is None
+
+
+def test_detect_pitch_voiced_male_range():
+    t = np.arange(SR) / SR
+    sig = (0.4 * np.sin(2 * np.pi * 110 * t) + 0.2 * np.sin(2 * np.pi * 220 * t)).astype("float32")
+    f0 = detect_pitch(sig, SR)
+    assert f0 is not None and abs(f0 - 110) < 3
+
+
+def test_freq_to_note_a4():
+    name, octave, cents = freq_to_note(440.0)
+    assert name == "A" and octave == 4 and abs(cents) <= 1
+
+
+def test_freq_to_note_c4_and_cents():
+    name, octave, _ = freq_to_note(261.63)
+    assert name == "C" and octave == 4
+    # 약간 높은 A4 → +cents
+    _, _, cents = freq_to_note(444.0)
+    assert cents > 0

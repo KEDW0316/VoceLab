@@ -23,6 +23,9 @@ const mockApi: PyApi = {
   async get_spectrum() {
     return mock.mockSpectrum();
   },
+  async get_pitch() {
+    return { hz: 220.5, note: "A", octave: 3, cents: 8 };
+  },
   async start_monitor() {},
   async stop_monitor() {},
   async play() {},

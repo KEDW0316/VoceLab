@@ -58,6 +58,7 @@ export interface PyApi {
   stop_recording(): Promise<AnalysisResult>;
   get_level(): Promise<number>;
   get_spectrum(): Promise<{ freqs: number[]; db: number[] }>;
+  get_pitch(): Promise<{ hz: number | null; note?: string; octave?: number; cents?: number }>;
   start_monitor(inputIndex: number | null): Promise<void>;
   stop_monitor(): Promise<void>;
   play(loop: boolean, start?: number): Promise<void>;

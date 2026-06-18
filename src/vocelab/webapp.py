@@ -19,10 +19,10 @@ from vocelab.analysis.metrics import VoiceMetrics, to_mono_f64
 from vocelab.analysis.rating import direction, rate
 from vocelab.analysis.references import reference_for
 from vocelab.audio import AudioEngine, input_devices, output_devices
-from vocelab.dsp import spectrogram_db, spectrum
+from vocelab.dsp import detect_pitch, spectrogram_db, spectrum
 from vocelab.scales import SCALES, get_scale
 from vocelab.sessions import SessionStore
-from vocelab.synth import note_name_to_freq, solfege, synthesize
+from vocelab.synth import freq_to_note, note_name_to_freq, solfege, synthesize
 
 # ---- 페이로드 변환 (순수, 테스트 가능) -------------------------------------
 
@@ -185,6 +185,14 @@ class Api:
         """실시간 스펙트럼(EQ 곡선)용 최근 프레임 스펙트럼."""
         freqs, db = spectrum(self.engine.recent_samples(), self.engine.samplerate)
         return {"freqs": freqs, "db": db}
+
+    def get_pitch(self) -> dict:
+        """실시간 음정 — 최근 버퍼에서 F0를 추정해 노트/옥타브/센트로. (녹음·재생·모니터 공통)"""
+        hz = detect_pitch(self.engine.recent_samples(), self.engine.samplerate)
+        if hz is None:
+            return {"hz": None}
+        name, octave, cents = freq_to_note(hz)
+        return {"hz": round(hz, 1), "note": name, "octave": octave, "cents": cents}
 
     def start_monitor(self, input_index=None) -> None:
         """상시 모니터 시작(녹음 안 할 때도 스펙트럼이 흐르도록)."""

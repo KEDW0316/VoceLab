@@ -115,6 +115,49 @@ def spectrum(
     return [round(float(x), 1) for x in target], [round(float(y), 1) for y in interp]
 
 
+def detect_pitch(
+    mono: np.ndarray,
+    samplerate: int,
+    *,
+    fmin: float = 65.0,
+    fmax: float = 1200.0,
+    rms_gate: float = 0.004,
+) -> float | None:
+    """자기상관 기반 실시간 F0(Hz) 추정. 명확한 피치가 없으면 None.
+
+    최근 프레임(최대 4096)에서 정규화 자기상관의 최대 피크를 찾고, 포물선 보간으로
+    세밀화한다. RMS가 너무 낮거나(무음) 피크가 약하면 None.
+    """
+    x = np.asarray(mono, dtype=np.float64)
+    if x.size < 1024:
+        return None
+    x = x[-4096:]
+    x = x - x.mean()
+    rms = float(np.sqrt(np.mean(x * x)))
+    if rms < rms_gate:
+        return None
+
+    corr = np.correlate(x, x, mode="full")[x.size - 1 :]
+    if corr[0] <= 0:
+        return None
+    lag_min = max(1, int(samplerate / fmax))
+    lag_max = min(int(samplerate / fmin), corr.size - 2)
+    if lag_max <= lag_min:
+        return None
+
+    peak = int(np.argmax(corr[lag_min:lag_max])) + lag_min
+    if corr[peak] / corr[0] < 0.3:  # 약한 주기성 → 무피치
+        return None
+
+    a, b, c = corr[peak - 1], corr[peak], corr[peak + 1]
+    denom = a - 2 * b + c
+    shift = 0.5 * (a - c) / denom if denom != 0 else 0.0
+    f0 = samplerate / (peak + shift)
+    if not (fmin <= f0 <= fmax):
+        return None
+    return float(f0)
+
+
 # --- 장기 평균 스펙트럼(LTAS) 기반 밴드 측정 --------------------------------
 
 

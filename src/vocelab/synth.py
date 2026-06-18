@@ -42,6 +42,16 @@ def note_name_to_freq(name: str) -> float:
     return midi_to_freq(note_name_to_midi(name))
 
 
+def freq_to_note(hz: float) -> tuple[str, int, int]:
+    """주파수(Hz)를 (음이름, 옥타브, 센트편차)로 변환. 예: 442 → ('A', 4, +8)."""
+    midi = 69.0 + 12.0 * np.log2(hz / A4_HZ)
+    nearest = int(round(midi))
+    name = _NOTE_NAMES[nearest % 12]
+    octave = nearest // 12 - 1
+    cents = int(round((midi - nearest) * 100))
+    return name, octave, cents
+
+
 def solfege(pattern: tuple[int, ...]) -> str:
     """반음 오프셋 패턴을 이동도 솔페지 문자열로(표시용, 베스트에포트)."""
     out = []

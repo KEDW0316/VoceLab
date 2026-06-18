@@ -9,6 +9,7 @@ JSON 직렬화 가능한 dict/list로 변환해 돌려준다.
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import numpy as np
@@ -244,7 +245,9 @@ def main() -> int:
     webview.create_window(
         "VoceLab", url=index.as_uri(), js_api=api, width=1280, height=900, min_size=(1000, 720)
     )
-    webview.start()
+    # VOCELAB_DEBUG=1 로 실행하면 우클릭 → 검사(개발자도구)로 콘솔 확인 가능
+    debug = os.environ.get("VOCELAB_DEBUG") in ("1", "true", "True")
+    webview.start(debug=debug)
     return 0
 
 

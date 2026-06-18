@@ -18,15 +18,24 @@ export function ScalePractice() {
   const [solfege, setSolfege] = useState("");
 
   useEffect(() => {
-    whenBackendReady().then(() =>
+    let cancelled = false;
+    const load = () =>
       api.list_scales().then((s) => {
+        if (cancelled || !s.length) return;
         setScales(s);
-        if (s.length) {
+        setScaleKey((prev) => {
+          if (prev && s.some((x) => x.key === prev)) return prev;
           const saved = loadPref("scale");
-          setScaleKey(s.some((x) => x.key === saved) ? saved! : s[0].key);
-        }
-      })
-    );
+          return s.some((x) => x.key === saved) ? saved! : s[0].key;
+        });
+      });
+    load(); // 즉시 로드(백엔드 없으면 목, 있으면 실제) — 목록이 절대 비지 않게
+    whenBackendReady().then((real) => {
+      if (real) load(); // 백엔드 준비되면 실제 목록(17종)으로 갱신
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {

@@ -2,20 +2,16 @@ import { useEffect, useRef, useState } from "react";
 import { Activity, Pause, Play } from "lucide-react";
 import { api } from "@/lib/api";
 import { SpectrumView } from "./SpectrumView";
-import { PitchView } from "./PitchView";
 
 interface Props {
   inputIdx: number | null;
   recording: boolean;
 }
 
-type Pitch = { hz: number | null; note?: string; octave?: number; cents?: number };
-
-// 실시간 스펙트럼(EQ) + 실시간 음정 — 상시 표시. 녹음 안 할 땐 모니터 입력으로 갱신, 프리즈로 고정.
+// 실시간 스펙트럼(EQ) — 상시 표시. 녹음 안 할 땐 모니터 입력으로 갱신, 프리즈로 고정.
 export function SpectrumPanel({ inputIdx, recording }: Props) {
   const [frozen, setFrozen] = useState(false);
   const [spec, setSpec] = useState<{ freqs: number[]; db: number[] }>({ freqs: [], db: [] });
-  const [pitch, setPitch] = useState<Pitch>({ hz: null });
   const timer = useRef<number | null>(null);
 
   // 녹음 중이 아니면 모니터 입력을 켜서 계속 스펙트럼이 흐르게 한다.
@@ -35,10 +31,9 @@ export function SpectrumPanel({ inputIdx, recording }: Props) {
       return;
     }
     timer.current = window.setInterval(async () => {
-      const [s, p] = await Promise.all([api.get_spectrum(), api.get_pitch()]);
+      const s = await api.get_spectrum();
       if (s.freqs.length > 1) setSpec(s);
-      setPitch(p);
-    }, 80);
+    }, 50);
     return () => {
       if (timer.current) window.clearInterval(timer.current);
     };
@@ -65,7 +60,6 @@ export function SpectrumPanel({ inputIdx, recording }: Props) {
       </div>
       <div className="relative min-h-0 flex-1">
         <SpectrumView freqs={spec.freqs} db={spec.db} />
-        <PitchView pitch={pitch} />
         {frozen && (
           <span className="absolute right-2 top-2 rounded bg-warning/20 px-1.5 py-0.5 text-[10px] text-warning">
             ❚❚ 프리즈됨

@@ -13,6 +13,7 @@ import { MetricsPanel } from "@/components/MetricsPanel";
 import { ScalePractice } from "@/components/ScalePractice";
 import { SessionBar } from "@/components/SessionBar";
 import { Transport } from "@/components/Transport";
+import { PitchView } from "@/components/PitchView";
 
 function toBaselineMap(r: AnalysisResult): Record<string, number | null> {
   return Object.fromEntries(r.metrics.map((m) => [m.key, m.value]));
@@ -228,6 +229,8 @@ export default function App() {
             onDelete={deleteSession}
             onSetBaseline={setBaselineSession}
           />
+          {/* 남는 공간에 큰 실시간 음정 */}
+          <PitchView />
         </div>
       </div>
     </div>

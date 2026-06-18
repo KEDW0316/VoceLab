@@ -176,7 +176,7 @@ export default function App() {
   }, [onRecordToggle]);
 
   return (
-    <div className="flex h-screen flex-col gap-2 p-3">
+    <div className="vl-enter flex h-screen flex-col gap-2 p-3">
       <Header recording={recording} status={status} />
       <DeviceBar onInputChange={setInputIdx} onOutputChange={setOutputIdx} />
 

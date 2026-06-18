@@ -67,6 +67,37 @@
     font-variant-numeric: tabular-nums;
     font-family: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", monospace;
   }
+
+  /* 모션 — 단일 시드(절제된 Snap/Silk). 진입은 near-zero, 데이터엔 모션 없음. */
+  @keyframes vl-rise {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .vl-enter {
+    animation: vl-rise 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .vl-lift {
+    transition: transform 150ms ease, background-color 150ms ease;
+  }
+  .vl-lift:hover {
+    transform: translateY(-1px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 ::-webkit-scrollbar {

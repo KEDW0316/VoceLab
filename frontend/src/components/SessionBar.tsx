@@ -45,7 +45,7 @@ export function SessionBar({
               <div
                 key={s.id}
                 onClick={() => onLoad(s.id)}
-                className={`group relative w-[136px] shrink-0 cursor-pointer rounded-md px-2.5 py-1.5 transition-colors ${
+                className={`vl-lift group relative w-[136px] shrink-0 cursor-pointer rounded-md px-2.5 py-1.5 ${
                   selected ? "bg-primary/15" : "bg-secondary/40 hover:bg-secondary/60"
                 }`}
               >

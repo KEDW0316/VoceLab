@@ -115,6 +115,31 @@ def spectrum(
     return [round(float(x), 1) for x in target], [round(float(y), 1) for y in interp]
 
 
+def representative_window(
+    mono: np.ndarray, samplerate: int, max_sec: float = 12.0
+) -> np.ndarray:
+    """긴 녹음에서 지표 분석용 '대표 구간'을 고른다.
+
+    max_sec 이하이면 그대로. 길면 에너지(RMS)가 가장 강한 max_sec 길이 구간을
+    슬라이딩으로 찾아 반환한다(무음·약한 도입/꼬리 회피). 전체 녹음의 지표는
+    의미가 옅으므로 대표 구간만 분석해 빠르고 유의미하게.
+    """
+    mono = np.asarray(mono, dtype=np.float64)
+    w = int(max_sec * samplerate)
+    if mono.size <= w:
+        return mono
+    hop = max(1, int(0.1 * samplerate))
+    nh = mono.size // hop
+    energy = (mono[: nh * hop].reshape(nh, hop) ** 2).sum(axis=1)
+    win_hops = max(1, w // hop)
+    if win_hops >= nh:
+        return mono[:w]
+    csum = np.concatenate([[0.0], np.cumsum(energy)])
+    win_energy = csum[win_hops:] - csum[:-win_hops]
+    start = int(np.argmax(win_energy)) * hop
+    return mono[start : start + w]
+
+
 def detect_pitch(
     mono: np.ndarray,
     samplerate: int,

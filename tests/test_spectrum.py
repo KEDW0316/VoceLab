@@ -101,3 +101,24 @@ def test_api_get_pitch_praat(monkeypatch):
     out = api.get_pitch()
     assert out["hz"] is not None and abs(out["hz"] - 220) < 4
     assert out["note"] == "A" and out["octave"] == 3
+
+
+# ---- 대표 구간 선택 ------------------------------------------------------
+from vocelab.dsp import representative_window
+
+
+def test_representative_window_short_passthrough():
+    sig = np.ones(SR, dtype="float32")  # 1초
+    assert representative_window(sig, SR, max_sec=12).size == SR
+
+
+def test_representative_window_picks_loud_segment():
+    # 30초: 앞뒤 조용, 중앙 5초만 큰 소리 → 대표구간이 그 큰 부분을 포함
+    n = 30 * SR
+    sig = (0.001 * np.random.randn(n)).astype("float64")
+    lo, hi = 12 * SR, 17 * SR
+    sig[lo:hi] += 0.5 * np.sin(2 * np.pi * 220 * np.arange(hi - lo) / SR)
+    seg = representative_window(sig, SR, max_sec=8)
+    assert seg.size == 8 * SR
+    # 대표구간 RMS가 전체 RMS보다 확실히 큼(조용한 부분 회피)
+    assert np.sqrt(np.mean(seg**2)) > np.sqrt(np.mean(sig**2))

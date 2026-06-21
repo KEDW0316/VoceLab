@@ -19,7 +19,7 @@ from vocelab.analysis.metrics import VoiceMetrics, to_mono_f64
 from vocelab.analysis.rating import direction, rate
 from vocelab.analysis.references import reference_for
 from vocelab.audio import AudioEngine, input_devices, output_devices
-from vocelab.dsp import spectrogram_db, spectrum
+from vocelab.dsp import representative_window, spectrogram_db, spectrum
 from vocelab.scales import SCALES, get_scale
 from vocelab.sessions import SessionStore
 from vocelab.synth import freq_to_note, note_name_to_freq, solfege, synthesize
@@ -157,13 +157,23 @@ class Api:
         }
 
     def analyze_current(self) -> dict:
-        """방금 녹음을 분석(지표)하고 세션에 저장한다. 재생 시작 후 백그라운드로 호출됨."""
+        """방금 녹음을 분석(지표)하고 세션에 저장한다. 재생 시작 후 백그라운드로 호출됨.
+
+        지표는 전체가 아니라 '대표 구간'(에너지 강한 ~12초)에서만 계산한다
+        — 긴 녹음 전체 지표는 의미가 옅고 느리므로. 파형·길이·저장 오디오는 전체.
+        """
         data = self._last_data
         if data is None or len(data) == 0:
             return {"duration": 0.0, "waveform": [], "metrics": [], "session_id": None}
-        payload = analysis_payload(data, self.engine.samplerate)
+        sr = self.engine.samplerate
+        seg = representative_window(to_mono_f64(data), sr)
+        payload = {
+            "duration": round(len(data) / sr, 3),
+            "waveform": waveform_payload(data),
+            "metrics": metrics_payload(analyze(seg, sr)),
+        }
         try:
-            rec = self.store.save(payload, data, self.engine.samplerate)
+            rec = self.store.save(payload, data, sr)
             payload["session_id"] = rec["id"]
         except Exception:  # noqa: BLE001
             payload["session_id"] = None

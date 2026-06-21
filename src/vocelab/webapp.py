@@ -91,10 +91,10 @@ def spectrogram_payload(
 
 
 def analysis_payload(samples: np.ndarray, samplerate: int) -> dict:
+    # 스펙트로그램은 lean UI에서 제거됨 → 계산하지 않음(특히 긴 녹음에서 큰 비용 절감)
     return {
         "duration": round(len(samples) / samplerate, 3) if len(samples) else 0.0,
         "waveform": waveform_payload(samples),
-        "spectrogram": spectrogram_payload(samples, samplerate),
         "metrics": metrics_payload(analyze(samples, samplerate)),
     }
 
@@ -122,6 +122,7 @@ class Api:
         self.engine = AudioEngine()
         self._output_index: int | None = None
         self.store = store or SessionStore()
+        self._last_data: np.ndarray | None = None  # 분석 대기 중인 최근 녹음
 
     # 장치
     def list_devices(self) -> dict:
@@ -142,9 +143,25 @@ class Api:
         self.engine.start_recording(device=device)
 
     def stop_recording(self) -> dict:
+        """녹음만 멈추고 즉시 가벼운 결과(길이·파형)를 반환한다.
+
+        무거운 분석/저장은 analyze_current()에서 별도로 — 재생이 분석을 기다리지 않게.
+        """
         data = self.engine.stop_recording()
+        self._last_data = data
+        return {
+            "duration": round(len(data) / self.engine.samplerate, 3) if len(data) else 0.0,
+            "waveform": waveform_payload(data),
+            "metrics": [],
+            "session_id": None,
+        }
+
+    def analyze_current(self) -> dict:
+        """방금 녹음을 분석(지표)하고 세션에 저장한다. 재생 시작 후 백그라운드로 호출됨."""
+        data = self._last_data
+        if data is None or len(data) == 0:
+            return {"duration": 0.0, "waveform": [], "metrics": [], "session_id": None}
         payload = analysis_payload(data, self.engine.samplerate)
-        # 녹음마다 자동으로 세션에 기록(훈련 로그)
         try:
             rec = self.store.save(payload, data, self.engine.samplerate)
             payload["session_id"] = rec["id"]

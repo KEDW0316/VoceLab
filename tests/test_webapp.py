@@ -59,7 +59,7 @@ def test_metrics_payload_includes_reference_and_is_serializable():
 
 def test_analysis_payload_is_json_serializable():
     payload = analysis_payload(_vowel(1.2), SR)
-    assert set(payload) == {"duration", "waveform", "spectrogram", "metrics"}
+    assert set(payload) == {"duration", "waveform", "metrics"}
     json.dumps(payload)  # numpy 타입이 남아있으면 여기서 실패
 
 

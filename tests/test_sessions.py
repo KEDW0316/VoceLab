@@ -64,12 +64,16 @@ def test_delete_sanitizes_path(tmp_path):
     assert store.delete("../../etc/passwd") is False
 
 
-def test_api_autosaves_on_stop(tmp_path, monkeypatch):
+def test_api_autosaves_on_analyze(tmp_path, monkeypatch):
     api = Api(store=SessionStore(tmp_path))
     # stop_recording이 엔진을 호출하지 않도록 더미 데이터로 대체
     dummy = (0.3 * np.sin(np.linspace(0, 40, 44100))).astype("float32").reshape(-1, 1)
     monkeypatch.setattr(api.engine, "stop_recording", lambda: dummy)
-    payload = api.stop_recording()
+    # 정지(가벼움) → 저장 안 함
+    quick = api.stop_recording()
+    assert quick["session_id"] is None and api.list_sessions() == []
+    # 분석(무거움) → 세션 저장
+    payload = api.analyze_current()
     assert payload.get("session_id")
     sessions = api.list_sessions()
     assert len(sessions) == 1

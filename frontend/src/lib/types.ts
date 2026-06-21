@@ -28,7 +28,7 @@ export interface Metric {
 export interface AnalysisResult {
   duration: number;
   waveform: number[]; // 다운샘플된 모노 (-1..1)
-  spectrogram: number[][]; // [freq][time], 0..1 정규화
+  spectrogram?: number[][]; // (lean UI에선 미사용)
   metrics: Metric[];
   session_id?: string | null;
 }
@@ -55,7 +55,8 @@ export interface PyApi {
   list_devices(): Promise<{ inputs: Device[]; outputs: Device[] }>;
   set_output_device(index: number | null): Promise<void>;
   start_recording(inputIndex: number | null): Promise<void>;
-  stop_recording(): Promise<AnalysisResult>;
+  stop_recording(): Promise<AnalysisResult>; // 빠른 반환(길이·파형). 지표 X
+  analyze_current(): Promise<AnalysisResult>; // 무거운 분석 + 세션 저장(백그라운드)
   get_level(): Promise<number>;
   get_spectrum(): Promise<{ freqs: number[]; db: number[] }>;
   get_pitch(): Promise<{ hz: number | null; note?: string; octave?: number; cents?: number }>;

@@ -15,6 +15,9 @@ const mockApi: PyApi = {
   async set_output_device() {},
   async start_recording() {},
   async stop_recording() {
+    return { duration: mock.mockAnalysis.duration, waveform: mock.mockAnalysis.waveform, metrics: [], session_id: null };
+  },
+  async analyze_current() {
     return mock.mockAnalysis;
   },
   async get_level() {

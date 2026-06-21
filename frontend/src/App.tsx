@@ -113,21 +113,29 @@ export default function App() {
     } else {
       stopTimers();
       setRecording(false);
-      setStatus("분석 중…");
-      const res = await api.stop_recording();
-      setResult(res);
-      setCurrentId(res.session_id ?? null);
+      // 1) 정지 즉시 가벼운 결과(길이·파형) → 바로 재생 (분석을 기다리지 않음)
+      const quick = await api.stop_recording();
+      setResult(quick);
+      setCurrentId(null);
       setPlayhead(0);
-      refreshSessions();
       if (feedback) {
-        if (res.session_id) api.play_session(res.session_id, true, 0);
-        else api.play(true, 0);
+        api.play(true, 0); // 방금 녹음(last_recording) 즉시 반복재생
         setPlaying(true);
-        setStatus(`녹음 완료 (${res.duration.toFixed(1)}s). 🔁 반복 재생 중 — ■ 로 멈춤`);
       } else {
         setPlaying(false);
-        setStatus(`녹음 완료 (${res.duration.toFixed(1)}s). 파형을 클릭하거나 ▶로 재생하세요.`);
       }
+      setStatus(`녹음 완료 (${quick.duration.toFixed(1)}s). 분석 중…`);
+      // 2) 무거운 분석/저장은 백그라운드 — 끝나면 지표·기록 채움
+      api.analyze_current().then((full) => {
+        setResult(full);
+        setCurrentId(full.session_id ?? null);
+        refreshSessions();
+        setStatus(
+          feedback
+            ? `녹음 완료 (${full.duration.toFixed(1)}s). 🔁 반복 재생 중 — ■ 로 멈춤`
+            : `녹음 완료 (${full.duration.toFixed(1)}s). 파형을 클릭하거나 ▶로 재생하세요.`
+        );
+      });
     }
   }, [recording, inputIdx, feedback, pollLevel, refreshSessions, stopPlay]);
 

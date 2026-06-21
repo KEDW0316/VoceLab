@@ -24,6 +24,8 @@ export function PitchView() {
   const inTune = Math.abs(cents) <= 10;
   const centColor = inTune ? "hsl(var(--success))" : "hsl(var(--warning))";
   const ko = p.note ? KO[p.note] ?? p.note : "";
+  // 한국 보컬 옥타브 관례 = 과학적 옥타브 − 2 (가온다 C4 = "2옥 도")
+  const koOctave = (p.octave ?? 0) - 2;
 
   return (
     <div className="vl-card flex min-h-0 flex-1 flex-col p-3">
@@ -34,7 +36,7 @@ export function PitchView() {
         {has ? (
           <>
             <div className="num text-6xl font-bold leading-none text-foreground">
-              <span className="text-3xl text-muted-foreground">{p.octave}옥 </span>
+              <span className="text-3xl text-muted-foreground">{koOctave}옥 </span>
               {ko}
             </div>
             <div className="mt-3 flex items-center gap-2 num text-sm">

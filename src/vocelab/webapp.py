@@ -290,6 +290,21 @@ def _dist_index() -> Path:
     return Path(__file__).resolve().parents[2] / "frontend" / "dist" / "index.html"
 
 
+def _runtime_dir() -> Path:
+    """번들/소스 기준 리소스 디렉터리."""
+    if getattr(sys, "frozen", False):
+        return Path(getattr(sys, "_MEIPASS", Path(sys.executable).parent))
+    return Path(__file__).resolve().parents[2] / "packaging"
+
+
+def _window_icon() -> str | None:
+    """Windows 작업표시줄/창 아이콘용 .ico 경로(있으면)."""
+    if sys.platform != "win32":
+        return None  # macOS는 .app 번들 아이콘이 처리
+    ico = _runtime_dir() / "icon.ico"
+    return str(ico) if ico.exists() else None
+
+
 def main() -> int:
     import webview
 
@@ -301,13 +316,31 @@ def main() -> int:
         )
         return 1
 
+    # Windows: 작업표시줄이 python 호스트가 아닌 VoceLab으로 인식하도록 AppUserModelID 지정
+    if sys.platform == "win32":
+        try:
+            import ctypes
+
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("com.vocelab.app")
+        except Exception:  # noqa: BLE001
+            pass
+
     api = Api()
     webview.create_window(
         "VoceLab", url=index.as_uri(), js_api=api, width=1280, height=900, min_size=(1000, 720)
     )
     # VOCELAB_DEBUG=1 로 실행하면 우클릭 → 검사(개발자도구)로 콘솔 확인 가능
     debug = os.environ.get("VOCELAB_DEBUG") in ("1", "true", "True")
-    webview.start(debug=debug)
+
+    kwargs = {"debug": debug}
+    icon = _window_icon()
+    if icon:
+        kwargs["icon"] = icon  # pywebview가 창/작업표시줄 아이콘으로 사용
+    try:
+        webview.start(**kwargs)
+    except TypeError:
+        # 설치된 pywebview가 icon 인자를 지원하지 않으면 무시하고 실행
+        webview.start(debug=debug)
     return 0
 
 

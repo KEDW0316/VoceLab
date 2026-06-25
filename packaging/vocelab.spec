@@ -14,6 +14,10 @@ exe_icon = _ico if (sys.platform == "win32" and os.path.exists(_ico)) else None
 app_icon = _icns if os.path.exists(_icns) else None
 
 datas = [(os.path.join(ROOT, "frontend", "dist"), "frontend/dist")]
+# 런타임 창/작업표시줄 아이콘용으로 .ico를 번들 루트에 포함
+for _icon_file in (_ico, _icns):
+    if os.path.exists(_icon_file):
+        datas.append((_icon_file, "."))
 binaries = []
 hiddenimports = ["vocelab", "vocelab.webapp"]
 

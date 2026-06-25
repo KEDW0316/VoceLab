@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { AudioLines } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 interface Props {
   data: number[]; // 진폭 엔벨로프 0..1
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function Waveform({ data, duration, startSec, playing, loop, onSeek }: Props) {
+  const { t } = useI18n();
   const ref = useRef<HTMLCanvasElement>(null);
   const raf = useRef<number | null>(null);
 
@@ -114,13 +116,13 @@ export function Waveform({ data, duration, startSec, playing, loop, onSeek }: Pr
     <div
       className="relative h-full w-full cursor-pointer"
       onClick={handleClick}
-      title="클릭한 위치부터 재생"
+      title={t("waveform.seek.title")}
     >
       <canvas ref={ref} className="h-full w-full" />
       {!data.length && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-muted-foreground/40">
           <AudioLines className="h-7 w-7" />
-          <span className="text-xs">녹음하면 파형이 표시됩니다 · 클릭으로 재생 위치 선택</span>
+          <span className="text-xs">{t("waveform.empty")}</span>
         </div>
       )}
     </div>

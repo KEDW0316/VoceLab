@@ -3,6 +3,8 @@ import { ChevronDown, ChevronUp, Music2, Play } from "lucide-react";
 import type { Scale } from "@/lib/types";
 import { api, whenBackendReady } from "@/lib/api";
 import { loadPref, savePref } from "@/lib/storage";
+import { useI18n } from "@/lib/i18n";
+import { SCALE_EN, solfegeTokens } from "@/lib/content";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 
@@ -12,6 +14,7 @@ const TONICS = [3, 4, 5].flatMap((o) =>
 );
 
 export function ScalePractice() {
+  const { lang, t } = useI18n();
   const [scales, setScales] = useState<Scale[]>([]);
   const [scaleKey, setScaleKey] = useState("");
   const [tonic, setTonic] = useState(() => loadPref("tonic") || "C4");
@@ -47,6 +50,9 @@ export function ScalePractice() {
   const scale = scales.find((s) => s.key === scaleKey);
   // 솔페지는 이동도(movable-do)라 토닉과 무관 — 스케일 데이터의 값을 그대로 사용
   const solfege = scale?.solfege ?? "";
+  // EN일 땐 영어 이름/설명/음절로 덮어씀
+  const en = (s: Scale) => (lang === "en" ? SCALE_EN[s.key] : undefined);
+  const nameOf = (s: Scale) => en(s)?.name ?? s.name;
 
   const transpose = (d: number) => {
     const i = TONICS.indexOf(tonic) + d;
@@ -58,14 +64,14 @@ export function ScalePractice() {
       <div className="flex flex-wrap items-center gap-2">
         <div className="vl-head">
           <Music2 className="h-3.5 w-3.5" />
-          스케일 연습
+          {t("panel.scales")}
         </div>
 
         <div className="min-w-[180px] flex-1">
           <Select value={scaleKey} onChange={(e) => setScaleKey(e.target.value)}>
             {scales.map((s) => (
               <option key={s.key} value={s.key}>
-                {s.name}
+                {nameOf(s)}
               </option>
             ))}
           </Select>
@@ -73,17 +79,17 @@ export function ScalePractice() {
 
         {/* 키 트랜스포즈 */}
         <div className="flex items-center gap-1 rounded-md bg-secondary/60 p-1">
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => transpose(-1)} title="반음 내림">
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => transpose(-1)} title={t("scales.transpose.down")}>
             <ChevronDown className="h-4 w-4" />
           </Button>
           <span className="num w-9 text-center text-sm font-semibold">{tonic}</span>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => transpose(1)} title="반음 올림">
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => transpose(1)} title={t("scales.transpose.up")}>
             <ChevronUp className="h-4 w-4" />
           </Button>
         </div>
 
         <Button onClick={() => api.play_guide_tone(scaleKey, tonic)}>
-          <Play className="h-4 w-4" /> 가이드 톤
+          <Play className="h-4 w-4" /> {t("scales.guide")}
         </Button>
       </div>
 
@@ -92,9 +98,9 @@ export function ScalePractice() {
           {/* 솔페지 pill */}
           <div className="flex flex-wrap items-center gap-1">
             {scale.glide ? (
-              <span className="rounded-md bg-secondary px-2 py-0.5 text-xs text-foreground">글라이드 ↗↘</span>
+              <span className="rounded-md bg-secondary px-2 py-0.5 text-xs text-foreground">{t("scales.glide")}</span>
             ) : (
-              solfege.split(" ").filter(Boolean).map((n, i) => (
+              solfegeTokens(solfege, lang).map((n, i) => (
                 <span key={i} className="num rounded-md bg-secondary px-1.5 py-0.5 text-xs text-foreground">
                   {n}
                 </span>
@@ -102,9 +108,9 @@ export function ScalePractice() {
             )}
           </div>
           <span className="rounded-md border border-border px-2 py-0.5 text-[11px] text-muted-foreground">
-            음절 {scale.syllable}
+            {t("scales.syllable")} {en(scale)?.syllable ?? scale.syllable}
           </span>
-          <p className="vl-label leading-snug">{scale.description}</p>
+          <p className="vl-label leading-snug">{en(scale)?.desc ?? scale.description}</p>
         </div>
       )}
     </div>

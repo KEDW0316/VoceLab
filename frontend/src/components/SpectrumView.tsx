@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Activity } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 interface Props {
   freqs: number[];
@@ -16,6 +17,7 @@ function fmtHz(f: number) {
 
 // DAW EQ식 실시간 스펙트럼 곡선 (로그 주파수 × dB).
 export function SpectrumView({ freqs, db, floor = -100 }: Props) {
+  const { t } = useI18n();
   const ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -86,7 +88,7 @@ export function SpectrumView({ freqs, db, floor = -100 }: Props) {
       {freqs.length < 2 && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-muted-foreground/40">
           <Activity className="h-7 w-7" />
-          <span className="text-xs">입력 신호를 기다리는 중… (소리를 내보세요)</span>
+          <span className="text-xs">{t("spectrum.empty")}</span>
         </div>
       )}
     </div>

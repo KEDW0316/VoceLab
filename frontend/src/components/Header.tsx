@@ -1,5 +1,6 @@
 import { Activity, Coffee } from "lucide-react";
 import { KOFI_URL } from "@/lib/config";
+import { useI18n } from "@/lib/i18n";
 
 interface Props {
   recording: boolean;
@@ -7,6 +8,7 @@ interface Props {
 }
 
 export function Header({ recording, status }: Props) {
+  const { lang, setLang, t } = useI18n();
   return (
     <header className="flex items-center gap-2.5">
       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15">
@@ -18,16 +20,32 @@ export function Header({ recording, status }: Props) {
 
       <div className="ml-auto flex items-center gap-3">
         {recording && <span className="h-1.5 w-1.5 rounded-full bg-danger" />}
-        <span className="max-w-[460px] truncate text-xs text-muted-foreground">{status}</span>
+        <span className="max-w-[420px] truncate text-xs text-muted-foreground">{status}</span>
+
+        {/* 언어 토글 */}
+        <div className="flex items-center overflow-hidden rounded-md border border-border text-[11px]">
+          {(["ko", "en"] as const).map((l) => (
+            <button
+              key={l}
+              onClick={() => setLang(l)}
+              className={`px-2 py-1 transition-colors ${
+                lang === l ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-secondary/60"
+              }`}
+            >
+              {l.toUpperCase()}
+            </button>
+          ))}
+        </div>
+
         <a
           href={KOFI_URL}
           target="_blank"
           rel="noreferrer"
           className="flex items-center gap-1 rounded-md px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-primary"
-          title="개발자에게 커피 한 잔 ☕"
+          title={t("donate.title")}
         >
           <Coffee className="h-3.5 w-3.5" />
-          후원
+          {t("donate")}
         </a>
       </div>
     </header>

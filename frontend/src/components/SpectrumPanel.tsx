@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Activity, Pause, Play } from "lucide-react";
 import { api } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
 import { SpectrumView } from "./SpectrumView";
 
 interface Props {
@@ -10,6 +11,7 @@ interface Props {
 
 // 실시간 스펙트럼(EQ) — 상시 표시. 녹음 안 할 땐 모니터 입력으로 갱신, 프리즈로 고정.
 export function SpectrumPanel({ inputIdx, recording }: Props) {
+  const { t } = useI18n();
   const [frozen, setFrozen] = useState(false);
   const [spec, setSpec] = useState<{ freqs: number[]; db: number[] }>({ freqs: [], db: [] });
   const timer = useRef<number | null>(null);
@@ -43,7 +45,7 @@ export function SpectrumPanel({ inputIdx, recording }: Props) {
     <div className="vl-card flex min-h-0 flex-1 flex-col overflow-hidden">
       <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-2">
         <div className="vl-head">
-          <Activity className="h-3.5 w-3.5" /> 실시간 스펙트럼
+          <Activity className="h-3.5 w-3.5" /> {t("panel.spectrum")}
         </div>
         <button
           onClick={() => setFrozen((f) => !f)}
@@ -52,17 +54,17 @@ export function SpectrumPanel({ inputIdx, recording }: Props) {
               ? "border-warning/50 bg-warning/10 text-warning"
               : "border-border text-muted-foreground hover:bg-secondary/60"
           }`}
-          title="현재 곡선을 멈춰서 고정"
+          title={t("spectrum.freeze.title")}
         >
           {frozen ? <Play className="h-3 w-3" /> : <Pause className="h-3 w-3" />}
-          {frozen ? "재개" : "프리즈"}
+          {frozen ? t("spectrum.resume") : t("spectrum.freeze")}
         </button>
       </div>
       <div className="relative min-h-0 flex-1">
         <SpectrumView freqs={spec.freqs} db={spec.db} />
         {frozen && (
           <span className="absolute right-2 top-2 rounded bg-warning/20 px-1.5 py-0.5 text-[10px] text-warning">
-            ❚❚ 프리즈됨
+            ❚❚ {t("spectrum.frozen")}
           </span>
         )}
       </div>

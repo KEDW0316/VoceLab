@@ -1,4 +1,5 @@
 import { Circle, Play, Square, RotateCcw } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 import { LevelMeter } from "./LevelMeter";
 
 interface Props {
@@ -24,6 +25,7 @@ export function Transport({
   recording, playing, canPlay, feedback, level, elapsed,
   onRecordToggle, onPlay, onStop, onFeedbackChange,
 }: Props) {
+  const { t } = useI18n();
   return (
     <div className="vl-card px-4 py-3">
       {/* 입력 레벨미터 */}
@@ -45,7 +47,7 @@ export function Transport({
                 ? "border-danger bg-danger/20"
                 : "border-danger/70 bg-danger/90 hover:bg-danger"
             }`}
-            title={recording ? "녹음 정지" : "녹음 시작 (Space)"}
+            title={recording ? t("transport.record.stop.title") : t("transport.record.start.title")}
           >
             {recording ? (
               <Square className="h-7 w-7 fill-danger text-danger" />
@@ -54,7 +56,7 @@ export function Transport({
             )}
           </button>
           <span className={`text-xs font-medium ${recording ? "text-danger" : "text-foreground"}`}>
-            {recording ? "녹음 중…" : "녹음"}
+            {recording ? t("transport.recording") : t("transport.record")}
           </span>
         </div>
 
@@ -68,7 +70,7 @@ export function Transport({
                 ? "border-primary bg-primary/20"
                 : "border-primary/70 bg-primary/90 text-primary-foreground hover:bg-primary"
             }`}
-            title={playing ? "정지" : "방금 녹음 재생"}
+            title={playing ? t("transport.stop") : t("transport.play.title")}
           >
             {playing ? (
               <Square className="h-7 w-7 fill-primary text-primary" />
@@ -76,7 +78,7 @@ export function Transport({
               <Play className="h-9 w-9 fill-current" />
             )}
           </button>
-          <span className="text-xs font-medium text-foreground">{playing ? "정지" : "재생"}</span>
+          <span className="text-xs font-medium text-foreground">{playing ? t("transport.stop") : t("transport.play")}</span>
         </div>
       </div>
 
@@ -89,10 +91,10 @@ export function Transport({
               ? "bg-primary/10 text-primary"
               : "text-muted-foreground hover:bg-secondary/60"
           }`}
-          title="켜면 녹음을 멈추는 즉시 방금 녹음을 반복 재생합니다."
+          title={t("transport.loop.title")}
         >
           <RotateCcw className="h-3.5 w-3.5" />
-          반복 재생
+          {t("transport.loop")}
         </button>
       </div>
     </div>

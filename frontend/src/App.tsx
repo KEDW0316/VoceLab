@@ -4,6 +4,7 @@ import type { AnalysisResult, SessionSummary } from "@/lib/types";
 import { api, whenBackendReady } from "@/lib/api";
 import { mockAnalysis } from "@/lib/mock";
 import { loadPref, savePref } from "@/lib/storage";
+import { useI18n } from "@/lib/i18n";
 import { Panel } from "@/components/ui/panel";
 import { Header } from "@/components/Header";
 import { DeviceBar } from "@/components/DeviceBar";
@@ -19,7 +20,11 @@ function toBaselineMap(r: AnalysisResult): Record<string, number | null> {
   return Object.fromEntries(r.metrics.map((m) => [m.key, m.value]));
 }
 
+// 상태줄: 번역 키 + 보간 변수를 보관 → 언어 토글 시 자동으로 다시 번역됨
+type Status = { key: string; vars?: Record<string, string | number> };
+
 export default function App() {
+  const { t } = useI18n();
   const [inputIdx, setInputIdx] = useState<number | null>(null);
   const [outputIdx, setOutputIdx] = useState<number | null>(null);
   const [recording, setRecording] = useState(false);
@@ -27,7 +32,7 @@ export default function App() {
   const [level, setLevel] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const [result, setResult] = useState<AnalysisResult | null>(null);
-  const [status, setStatus] = useState("오디오 인터페이스를 선택하고 녹음을 시작하세요.");
+  const [status, setStatus] = useState<Status>({ key: "st.idle" });
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [baselineId, setBaselineId] = useState<string | null>(null);
@@ -79,12 +84,12 @@ export default function App() {
     whenBackendReady().then((real) => {
       refreshSessions();
       if (real) {
-        setStatus("준비됨 — 오디오 인터페이스를 선택하고 녹음을 시작하세요.");
+        setStatus({ key: "st.ready" });
         return;
       }
       const seed = (window as unknown as { __VOCELAB_SEED__?: AnalysisResult }).__VOCELAB_SEED__;
       setResult(seed ?? mockAnalysis);
-      setStatus(seed ? `녹음 완료 (${seed.duration.toFixed(1)}s) — 실 분석 데이터` : "데모 모드 — 목 데이터 (백엔드 미연결)");
+      setStatus(seed ? { key: "st.seed", vars: { s: seed.duration.toFixed(1) } } : { key: "st.demo" });
     });
   }, [refreshSessions]);
 
@@ -108,7 +113,7 @@ export default function App() {
       setPlayhead(0);
       await api.start_recording(inputIdx);
       setRecording(true);
-      setStatus("● 녹음 중입니다. 발성하세요.");
+      setStatus({ key: "st.recording" });
       pollLevel();
     } else {
       stopTimers();
@@ -124,17 +129,16 @@ export default function App() {
       } else {
         setPlaying(false);
       }
-      setStatus(`녹음 완료 (${quick.duration.toFixed(1)}s). 분석 중…`);
+      setStatus({ key: "st.analyzing", vars: { s: quick.duration.toFixed(1) } });
       // 2) 무거운 분석/저장은 백그라운드 — 끝나면 지표·기록 채움
       api.analyze_current().then((full) => {
         setResult(full);
         setCurrentId(full.session_id ?? null);
         refreshSessions();
-        setStatus(
-          feedback
-            ? `녹음 완료 (${full.duration.toFixed(1)}s). 🔁 반복 재생 중 — ■ 로 멈춤`
-            : `녹음 완료 (${full.duration.toFixed(1)}s). 파형을 클릭하거나 ▶로 재생하세요.`
-        );
+        setStatus({
+          key: feedback ? "st.loop" : "st.done",
+          vars: { s: full.duration.toFixed(1) },
+        });
       });
     }
   }, [recording, inputIdx, feedback, pollLevel, refreshSessions, stopPlay]);
@@ -147,7 +151,7 @@ export default function App() {
       setResult(res);
       setCurrentId(id);
       setPlayhead(0);
-      setStatus("기록 불러옴 — 파형을 클릭하거나 ▶로 재생하세요.");
+      setStatus({ key: "st.loaded" });
     }
   };
   const deleteSession = async (id: string) => {
@@ -186,7 +190,7 @@ export default function App() {
 
   return (
     <div className="vl-enter flex h-screen flex-col gap-2 p-3">
-      <Header recording={recording} status={status} />
+      <Header recording={recording} status={t(status.key, status.vars)} />
       <DeviceBar onInputChange={setInputIdx} onOutputChange={setOutputIdx} />
 
       {/* 2단: 좌(시각화) / 우(컨트롤·연습·기록) */}
@@ -194,7 +198,7 @@ export default function App() {
         {/* 좌측 — 파형(컴팩트) + 스펙트럼(세로로 길게) + 핵심 지표 */}
         <div className="flex min-h-0 flex-col gap-2">
           <Panel
-            title="파형"
+            title={t("panel.waveform")}
             icon={<AudioLines className="h-3.5 w-3.5" />}
             right={result ? `${result.duration.toFixed(1)}s` : undefined}
             className="h-[84px] shrink-0"

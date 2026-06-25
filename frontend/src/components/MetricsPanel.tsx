@@ -1,4 +1,6 @@
 import type { Metric } from "@/lib/types";
+import { useI18n } from "@/lib/i18n";
+import { METRIC_EN } from "@/lib/content";
 
 // 핵심 지표만 (CPPS·HNR·지터·쉬머). 모든 카드가 동일한 형태.
 const CORE = ["cpps", "hnr", "jitter", "shimmer"];
@@ -9,11 +11,11 @@ const STATUS_COLOR: Record<Metric["status"], string> = {
   poor: "hsl(var(--danger))",
   info: "hsl(var(--foreground))",
 };
-const STATUS_LABEL: Record<Metric["status"], string> = {
-  good: "양호",
-  watch: "주의",
-  poor: "개선 필요",
-  info: "정보",
+const STATUS_KEY: Record<Metric["status"], string> = {
+  good: "status.good",
+  watch: "status.watch",
+  poor: "status.poor",
+  info: "status.info",
 };
 
 function fmt(v: number | null): string {
@@ -23,8 +25,13 @@ function fmt(v: number | null): string {
 }
 
 function Card({ m, base }: { m: Metric; base?: number | null }) {
+  const { lang, t } = useI18n();
   const color = STATUS_COLOR[m.status];
-  const tip = [m.description, m.normal && `정상/참고: ${m.normal}`].filter(Boolean).join("\n\n");
+  const en = lang === "en" ? METRIC_EN[m.key] : undefined;
+  const label = en?.label ?? m.label;
+  const description = en?.desc ?? m.description;
+  const normal = en?.normal ?? m.normal;
+  const tip = [description, normal && `${t("metrics.normal")}: ${normal}`].filter(Boolean).join("\n\n");
 
   let delta: string | null = null;
   let deltaColor = "hsl(var(--muted-foreground))";
@@ -40,8 +47,8 @@ function Card({ m, base }: { m: Metric; base?: number | null }) {
   return (
     <div className="vl-card flex flex-1 flex-col gap-1 px-3 py-2.5" title={tip}>
       <div className="flex items-center gap-1.5">
-        <span className="h-1.5 w-1.5 rounded-full" style={{ background: color }} title={STATUS_LABEL[m.status]} />
-        <span className="vl-label">{m.label}</span>
+        <span className="h-1.5 w-1.5 rounded-full" style={{ background: color }} title={t(STATUS_KEY[m.status])} />
+        <span className="vl-label">{label}</span>
         {delta && <span className="num ml-auto text-[11px]" style={{ color: deltaColor }}>{delta}</span>}
       </div>
       <div className="flex items-baseline whitespace-nowrap">
@@ -59,11 +66,12 @@ export function MetricsPanel({
   metrics: Metric[];
   baseline?: Record<string, number | null> | null;
 }) {
+  const { t } = useI18n();
   const core = CORE.map((k) => metrics.find((m) => m.key === k)).filter(Boolean) as Metric[];
   if (core.length === 0) {
     return (
       <div className="vl-card px-3 py-2.5 text-center vl-label">
-        녹음하면 핵심 음향 지표(CPPS · HNR · 지터 · 쉬머)가 표시됩니다.
+        {t("metrics.empty")}
       </div>
     );
   }

@@ -3,6 +3,7 @@ import { Mic, RefreshCw, Speaker } from "lucide-react";
 import type { Device } from "@/lib/types";
 import { api, whenBackendReady } from "@/lib/api";
 import { loadPref, savePref } from "@/lib/storage";
+import { useI18n } from "@/lib/i18n";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export function DeviceBar({ onInputChange, onOutputChange }: Props) {
+  const { t } = useI18n();
   const [inputs, setInputs] = useState<Device[]>([]);
   const [outputs, setOutputs] = useState<Device[]>([]);
   const [inputIdx, setInputIdx] = useState<number | null>(null);
@@ -75,7 +77,7 @@ export function DeviceBar({ onInputChange, onOutputChange }: Props) {
           ))}
         </Select>
       </div>
-      <Button variant="outline" size="icon" onClick={refresh} title="장치 새로고침">
+      <Button variant="outline" size="icon" onClick={refresh} title={t("device.refresh")}>
         <RefreshCw className="h-4 w-4" />
       </Button>
     </div>

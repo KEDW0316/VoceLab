@@ -1,5 +1,6 @@
 import { History, Play, Star, Trash2 } from "lucide-react";
 import type { SessionSummary } from "@/lib/types";
+import { useI18n } from "@/lib/i18n";
 
 const STATUS_COLOR: Record<string, string> = {
   good: "hsl(var(--success))",
@@ -26,16 +27,17 @@ interface Props {
 export function SessionBar({
   sessions, currentId, baselineId, onLoad, onPlay, onDelete, onSetBaseline,
 }: Props) {
+  const { t } = useI18n();
   return (
     <div className="vl-card p-3">
       <div className="mb-1.5 vl-head">
-        <History className="h-3.5 w-3.5" /> 기록
+        <History className="h-3.5 w-3.5" /> {t("panel.history")}
         <span className="font-normal text-muted-foreground/60">
-          ({sessions.length}) · ★=비교 기준
+          ({sessions.length}) · {t("history.baselineHint")}
         </span>
       </div>
       {sessions.length === 0 ? (
-        <p className="px-1 py-1.5 vl-label">녹음하면 자동으로 여기에 저장됩니다.</p>
+        <p className="px-1 py-1.5 vl-label">{t("history.empty")}</p>
       ) : (
         <div className="flex gap-2 overflow-x-auto pb-1">
           {sessions.map((s) => {
@@ -54,7 +56,7 @@ export function SessionBar({
                   {isBaseline && <Star className="h-3 w-3 fill-primary text-primary" />}
                 </div>
                 <div className="truncate text-[11px] text-foreground/90">
-                  {s.label || "무제"}
+                  {s.label || t("history.untitled")}
                 </div>
                 <div className="flex items-baseline gap-1">
                   <span className="text-[11px] text-muted-foreground">CPPS</span>
@@ -68,13 +70,13 @@ export function SessionBar({
 
                 {/* 액션 (호버 시) */}
                 <div className="mt-1 flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                  <button onClick={(e) => { e.stopPropagation(); onPlay(s.id); }} title="재생" className="rounded p-0.5 hover:bg-secondary">
+                  <button onClick={(e) => { e.stopPropagation(); onPlay(s.id); }} title={t("history.play")} className="rounded p-0.5 hover:bg-secondary">
                     <Play className="h-3.5 w-3.5 text-muted-foreground hover:text-primary" />
                   </button>
-                  <button onClick={(e) => { e.stopPropagation(); onSetBaseline(s.id); }} title="비교 기준 설정" className="rounded p-0.5 hover:bg-secondary">
+                  <button onClick={(e) => { e.stopPropagation(); onSetBaseline(s.id); }} title={t("history.baseline")} className="rounded p-0.5 hover:bg-secondary">
                     <Star className={`h-3.5 w-3.5 ${isBaseline ? "fill-primary text-primary" : "text-muted-foreground hover:text-primary"}`} />
                   </button>
-                  <button onClick={(e) => { e.stopPropagation(); onDelete(s.id); }} title="삭제" className="ml-auto rounded p-0.5 hover:bg-secondary">
+                  <button onClick={(e) => { e.stopPropagation(); onDelete(s.id); }} title={t("history.delete")} className="ml-auto rounded p-0.5 hover:bg-secondary">
                     <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-danger" />
                   </button>
                 </div>

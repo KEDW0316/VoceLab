@@ -1,79 +1,67 @@
 # VoceLab
 
-보컬 트레이닝 보조 데스크톱 앱. 오디오 인터페이스로 마이크를 받아 녹음하고,
-즉시 모니터링하며, Praat 수준의 음향 지표(CPP 등)로 발성을 분석한다.
+보컬 트레이닝 보조 **데스크톱 앱**. 오디오 인터페이스로 녹음하고 즉시 들어보며,
+**실시간 음정·스펙트럼**과 **Praat 기반 음향 지표(CPPS·HNR·지터·쉬머)** 로 발성을
+객관적으로 분석한다. 녹음·기록은 전부 로컬에만 저장된다(서버 전송 없음).
 
-> 설계 전반은 [`PLANNING.md`](./PLANNING.md) 참고.
+> 🌐 소개·다운로드: **https://kedw0316.github.io/VoceLab/**
+> ☕ 후원: **https://ko-fi.com/pongtuna**
 
-## 현재 상태 — M3 (지표 확장)
+## 주요 기능
+- 🎙 **녹음 & 즉시 재생** — 파형 클릭으로 원하는 지점부터 재생
+- 🎵 **실시간 음정** — 노트+옥타브(한글 "2옥 도")와 센트, 녹음/재생/모니터 공통
+- 📊 **실시간 스펙트럼** — DAW EQ식 막대 분석기 + 프리즈
+- 🔬 **음향 지표** — CPPS·HNR·지터·쉬머(Praat 엔진), 양호/주의/개선 색 표시
+- 🎹 **스케일 연습** — 워밍업 스케일 17종 + 가이드 톤 + 키 트랜스포즈
+- 📈 **기록 & 전후 비교** — 녹음마다 자동 저장, 워밍업 전/후 델타
 
-- ✅ 오디오 인터페이스(입/출력) 열거·선택
-- ✅ 버튼으로 녹음 시작/정지, 입력 레벨미터
-- ✅ 녹음 즉시 재생 (방금 발성을 바로 모니터링)
-- ✅ **피드백 모드** 토글: 켜면 녹음 정지 즉시 방금 스케일을 반복 재생(귀 훈련),
-  끄면 일반 모드(녹음만·지표 표시). 두 모드 모두 지표는 그대로 산출
-- ✅ 녹음 파형 + 스펙트로그램 표시
-- ✅ CPPS·HNR·F0·지터·쉬머 (Praat 기반)
-- ✅ 포먼트(F1–F3)·Alpha ratio·Hammarberg·SPR(Singer's Formant)·비브라토 rate/extent
-- ✅ 카테고리별(음질/음높이/공명·음색/비브라토) 지표 패널
-- ✅ 각 지표 카드의 **📄 출처** 링크 → 근거 논문(DOI/PubMed) 열기. 요약은 툴팁
-- ✅ **스케일 연습**: 기본 워밍업 스케일 10종(5-tone·메이저·아르페지오·스타카토·
-  옥타브·5도·크로매틱·립트릴·지속모음·사이렌). 가이드 톤 합성 재생 + 토닉 반음
-  트랜스포즈(코치 방식) + 솔페지 표시
-- ⏳ 세션 저장·전후 비교, VRP (M4~)
+## 아키텍처
+- **백엔드(Python)**: 오디오 I/O(`sounddevice`/PortAudio), 음향 분석(`praat-parselmouth`),
+  신호처리(`scipy`/`numpy`). UI에 비의존이라 단독 테스트 가능.
+- **프론트엔드(웹)**: React + TypeScript + Tailwind. `pywebview`가 네이티브 창에 띄우고,
+  `window.pywebview.api`로 백엔드를 호출.
 
-### 발성 문제별 권장 연습
-
-[`docs/VOCAL_EXERCISES.md`](./docs/VOCAL_EXERCISES.md) — 기식성·과긴장·고음역·음정·공명·
-호흡 등 발성 문제별로 효과가 알려진 발음·연습(SOVT, resonant voice, 트왱, VFE, 메사 디 보체
-등)과 기전·근거(논문 DOI)를 정리. 5개 병렬 웹 리서치를 종합·교차검증했으며 검증 한계도 명시.
-
-### 지표 출처
-
-각 지표의 근거 논문·요약은 [`docs/REFERENCES.md`](./docs/REFERENCES.md)에 정리되어 있고,
-앱의 각 지표 카드 **📄 출처** 링크가 이 1차 출처로 연결된다. 출처 데이터의 단일 출처는
-`src/vocelab/analysis/references.py`이며, 문서는 아래로 재생성한다(테스트가 동기화 검증):
-
-```bash
-PYTHONPATH=src python tools/gen_references.py
+```
+src/vocelab/        # Python: audio / analysis / dsp / scales / synth / sessions / webapp
+frontend/           # React 웹 UI (Vite)
+packaging/          # PyInstaller(.spec) + Inno Setup(.iss) 설치파일
+site/               # 랜딩 페이지(GitHub Pages)
+docs/               # 음향 지표 출처·발성 연습 레퍼런스
 ```
 
-## 설치 & 실행
-
-UI는 **웹 프론트엔드(React+Tailwind) + pywebview 데스크톱 셸**이다. 오디오·분석은
-Python(`sounddevice`/Parselmouth)이 담당하고, 프론트엔드는 `window.pywebview.api`로
-이를 호출한다.
+## 개발 환경에서 실행
+사전: Python 3.11+, Node 18+
 
 ```bash
-# 1) 프론트엔드 빌드 (최초 1회 또는 UI 변경 시)
+# 1) 프론트엔드 빌드 (UI 변경 시마다)
 cd frontend && npm install && npm run build && cd ..
 
-# 2) Python 백엔드 + 데스크톱 셸 실행
+# 2) 백엔드 설치 후 실행
 python -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-python -m vocelab                  # = vocelab.webapp (pywebview 창)
+source .venv/bin/activate          # Windows: .venv\Scripts\Activate.ps1
+pip install -e .
+python -m vocelab
 ```
-
-> 프론트엔드 단독 개발: `cd frontend && npm run dev` (백엔드 없으면 목 데이터로 동작).
-> 구버전 PySide6 UI는 `python -m vocelab.app` 또는 `vocelab-qt`로 실행(레거시).
-
-> Windows에서 ASIO 저지연을 쓰려면 인터페이스 제조사 ASIO 드라이버를 설치하세요.
-> macOS는 CoreAudio로 별도 드라이버 없이 동작합니다.
+프론트엔드 단독 개발: `cd frontend && npm run dev` (백엔드 없으면 목 데이터로 동작).
+디버그(개발자도구): `VOCELAB_DEBUG=1 python -m vocelab`.
 
 ## 테스트
-
 ```bash
 pip install pytest
-pytest                              # 하드웨어 불필요한 단위 테스트
+PYTHONPATH=src pytest        # 하드웨어 불필요한 단위 테스트
 ```
 
-## 구조
+## 배포 (설치파일)
+태그를 푸시하면 GitHub Actions가 Windows 설치 마법사(`VoceLab-Setup.exe`)와
+macOS 디스크이미지(`VoceLab.dmg`)를 빌드해 Release에 첨부한다.
+```bash
+git tag v0.1.0 && git push origin v0.1.0
+```
+자세한 내용·서명 안내: [`packaging/README.md`](./packaging/README.md)
 
-```
-src/vocelab/
-  audio/      # sounddevice 기반 녹음/재생 (Qt 비의존)
-  analysis/   # Parselmouth 기반 음향 분석 (M2+)
-  ui/         # PySide6 UI
-  app.py      # 진입점
-```
+## 참고
+- 의료·진단 도구가 아닙니다. 음성 문제가 지속되면 전문가(이비인후과/언어재활사) 상담을 권합니다.
+- 지표 근거: [`docs/REFERENCES.md`](./docs/REFERENCES.md) · 발성 연습: [`docs/VOCAL_EXERCISES.md`](./docs/VOCAL_EXERCISES.md)
+
+## 라이선스
+[MIT](./LICENSE)

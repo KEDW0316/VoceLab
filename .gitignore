@@ -6,6 +6,7 @@ __pycache__/
 build/
 dist/
 *.spec
+!packaging/vocelab.spec
 
 # Virtual envs
 .venv/

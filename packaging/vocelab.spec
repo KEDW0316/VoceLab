@@ -7,6 +7,12 @@ from PyInstaller.utils.hooks import collect_all
 
 ROOT = os.path.abspath(os.path.join(SPECPATH, ".."))  # repo 루트
 
+# 아이콘(있으면 적용). make_icons.py가 생성.
+_ico = os.path.join(SPECPATH, "icon.ico")
+_icns = os.path.join(SPECPATH, "icon.icns")
+exe_icon = _ico if (sys.platform == "win32" and os.path.exists(_ico)) else None
+app_icon = _icns if os.path.exists(_icns) else None
+
 datas = [(os.path.join(ROOT, "frontend", "dist"), "frontend/dist")]
 binaries = []
 hiddenimports = ["vocelab", "vocelab.webapp"]
@@ -54,7 +60,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=None,
+    icon=exe_icon,
 )
 
 # macOS는 .app 번들로 감싼다.
@@ -62,7 +68,7 @@ if sys.platform == "darwin":
     app = BUNDLE(
         exe,
         name="VoceLab.app",
-        icon=None,
+        icon=app_icon,
         bundle_identifier="com.vocelab.app",
         info_plist={
             "NSMicrophoneUsageDescription": "VoceLab는 발성 녹음·분석을 위해 마이크를 사용합니다.",

@@ -44,9 +44,20 @@ jobs:
       - name: Build with PyInstaller
         run: pyinstaller packaging/vocelab.spec
 
-      - name: Zip macOS .app
+      - name: Build Windows installer (Inno Setup)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          choco install innosetup -y --no-progress
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" packaging\installer.iss
+
+      - name: Build macOS DMG
         if: runner.os == 'macOS'
-        run: cd dist && zip -r VoceLab-macos.zip VoceLab.app
+        run: |
+          mkdir -p dist/dmg
+          cp -R dist/VoceLab.app dist/dmg/
+          ln -s /Applications dist/dmg/Applications
+          hdiutil create -volname "VoceLab" -srcfolder dist/dmg -ov -format UDZO dist/VoceLab.dmg
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
@@ -54,8 +65,8 @@ jobs:
           name: VoceLab-${{ runner.os }}
           if-no-files-found: ignore
           path: |
-            dist/VoceLab.exe
-            dist/VoceLab-macos.zip
+            dist/VoceLab-Setup.exe
+            dist/VoceLab.dmg
 
       - name: Attach to GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
@@ -63,5 +74,5 @@ jobs:
         with:
           fail_on_unmatched_files: false
           files: |
-            dist/VoceLab.exe
-            dist/VoceLab-macos.zip
+            dist/VoceLab-Setup.exe
+            dist/VoceLab.dmg

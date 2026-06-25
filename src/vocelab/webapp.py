@@ -10,6 +10,7 @@ JSON 직렬화 가능한 dict/list로 변환해 돌려준다.
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -278,7 +279,14 @@ class Api:
 
 
 def _dist_index() -> Path:
-    """빌드된 프론트엔드 진입점 경로 (repo_root/frontend/dist/index.html)."""
+    """빌드된 프론트엔드 진입점 경로.
+
+    개발: repo_root/frontend/dist/index.html
+    PyInstaller 패키지(frozen): 번들에 포함된 frontend/dist/index.html (sys._MEIPASS)
+    """
+    if getattr(sys, "frozen", False):
+        base = Path(getattr(sys, "_MEIPASS", Path(sys.executable).parent))
+        return base / "frontend" / "dist" / "index.html"
     return Path(__file__).resolve().parents[2] / "frontend" / "dist" / "index.html"
 
 

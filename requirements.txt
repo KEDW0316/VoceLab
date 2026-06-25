@@ -15,4 +15,3 @@ pyqtgraph>=0.13
 
 # 음향 분석 (M2+에서 사용)
 praat-parselmouth>=0.4.3
-librosa>=0.10

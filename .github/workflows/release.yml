@@ -1,0 +1,67 @@
+name: Release build (Windows / macOS)
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch: # 수동 실행(빌드 점검용)
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+          - os: macos-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller
+
+      - name: Build with PyInstaller
+        run: pyinstaller packaging/vocelab.spec
+
+      - name: Zip macOS .app
+        if: runner.os == 'macOS'
+        run: cd dist && zip -r VoceLab-macos.zip VoceLab.app
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: VoceLab-${{ runner.os }}
+          if-no-files-found: ignore
+          path: |
+            dist/VoceLab.exe
+            dist/VoceLab-macos.zip
+
+      - name: Attach to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          fail_on_unmatched_files: false
+          files: |
+            dist/VoceLab.exe
+            dist/VoceLab-macos.zip

@@ -2,7 +2,7 @@ name: Deploy landing page (GitHub Pages)
 
 on:
   push:
-    branches: [main]
+    branches: [main, "claude/**"]
     paths: ["site/**", ".github/workflows/pages.yml"]
   workflow_dispatch: # 어느 브랜치에서든 수동 배포
 

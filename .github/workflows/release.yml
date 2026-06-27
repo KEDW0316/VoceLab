@@ -3,7 +3,12 @@ name: Release build (Windows / macOS)
 on:
   push:
     tags: ["v*"]
-  workflow_dispatch: # 수동 실행(빌드 점검용)
+  workflow_dispatch: # 수동 실행
+    inputs:
+      release_tag:
+        description: "릴리스를 만들 태그 (예: v0.1.0). 비워두면 빌드 점검만 합니다."
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -72,10 +77,11 @@ jobs:
             dist/VoceLab.dmg
 
       - name: Attach to GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/') || inputs.release_tag != ''
         uses: softprops/action-gh-release@v2
         with:
-          name: VoceLab ${{ github.ref_name }}
+          tag_name: ${{ inputs.release_tag != '' && inputs.release_tag || github.ref_name }}
+          name: VoceLab ${{ inputs.release_tag != '' && inputs.release_tag || github.ref_name }}
           fail_on_unmatched_files: false
           body: |
             보컬 트레이닝 보조 앱 **VoceLab**의 첫 정식 릴리스입니다. 🎤

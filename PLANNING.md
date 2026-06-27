@@ -16,10 +16,14 @@
 |---|---|---|
 | 언어 | Python 3.11+ | 음향 분석 생태계가 가장 풍부 |
 | 오디오 I/O | `sounddevice` (PortAudio) | 오디오 인터페이스 멀티채널, 저지연 녹음/재생. Win=ASIO/WASAPI, mac=CoreAudio |
-| 음향 분석 | `parselmouth`(Praat) + `librosa` | CPP/지터/쉬머/HNR/포먼트는 Praat 엔진 그대로. 보조 지표는 librosa |
+| 음향 분석 | `parselmouth`(Praat) | CPP/지터/쉬머/HNR/포먼트를 Praat 엔진 그대로 산출 |
 | 수치 처리 | `numpy`, `scipy` | 신호 처리 기반 |
-| UI | `PySide6` + `pyqtgraph` | 실시간 파형/스펙트로그램, 오인페 직접 접근, 크로스플랫폼 |
-| 패키징 | `PyInstaller` | Windows/macOS 단일 실행파일 |
+| UI | `pywebview` + React/TypeScript | 네이티브 셸 안의 웹 UI. 파이썬 백엔드를 `window.pywebview.api`로 노출. 한/영 i18n |
+| 패키징 | `PyInstaller` + Inno Setup / hdiutil | Windows `.exe` 설치 프로그램 · macOS `.dmg` |
+
+> 초기 계획은 `PySide6` + `pyqtgraph` 데스크톱 UI였으나, 웹 기반 UI(React)가
+> 레이아웃·모션·다국어에서 더 유연해 `pywebview` 셸로 전환했다. 오디오/분석
+> 백엔드는 동일하게 Qt 비의존 순수 파이썬으로 유지된다.
 
 ### 왜 Parselmouth인가
 요구사항 3(Praat처럼 CPP)이 스택을 결정한다. Parselmouth는 Praat 엔진을
@@ -61,17 +65,20 @@ src/vocelab/
   audio/        # 오디오 인터페이스 I/O (sounddevice)
     devices.py    # 입출력 장치 열거/선택
     engine.py     # 녹음·재생 엔진 (프레임워크 비의존)
-  analysis/     # 음향 분석 (parselmouth/librosa) — M2+
+  analysis/     # 음향 분석 (parselmouth)
     metrics.py
-  ui/           # PySide6 UI
-    main_window.py
-    widgets/
-      waveform.py
-  app.py        # 진입점
+  dsp.py        # 파형/스펙트럼 변환 (순수 numpy/scipy)
+  scales.py     # 보컬 워밍업 스케일
+  sessions.py   # 녹음 저장·기록
+  webapp.py     # pywebview 진입점 + JS에 노출되는 Api 클래스
+frontend/       # React + TypeScript + Vite 웹 UI (한/영 i18n)
+  src/
+    components/
+    lib/          # api 브리지, i18n, content(번역 테이블)
 ```
 
-UI(Qt)와 오디오 엔진을 분리한다. 엔진은 Qt 비의존(순수 파이썬)으로 두어
-테스트·재사용이 쉽게 한다.
+웹 UI와 오디오/분석 엔진을 분리한다. 엔진은 UI 비의존(순수 파이썬)으로 두어
+테스트·재사용이 쉽게 한다. UI는 `webapp.Api`를 통해서만 백엔드와 통신한다.
 
 ## 5. 로드맵
 

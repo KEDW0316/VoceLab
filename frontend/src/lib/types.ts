@@ -28,7 +28,6 @@ export interface Metric {
 export interface AnalysisResult {
   duration: number;
   waveform: number[]; // 다운샘플된 모노 (-1..1)
-  spectrogram?: number[][]; // (lean UI에선 미사용)
   metrics: Metric[];
   session_id?: string | null;
 }

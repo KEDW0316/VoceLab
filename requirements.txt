@@ -9,9 +9,5 @@ scipy>=1.10
 # UI (웹 프론트엔드를 띄우는 데스크톱 셸)
 pywebview>=5.0
 
-# 구버전 PySide6 UI (레거시, 웹 UI로 대체 중)
-PySide6>=6.6
-pyqtgraph>=0.13
-
-# 음향 분석 (M2+에서 사용)
+# 음향 분석 (Praat 엔진)
 praat-parselmouth>=0.4.3

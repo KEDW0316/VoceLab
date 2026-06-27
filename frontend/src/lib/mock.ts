@@ -71,22 +71,6 @@ export function mockWaveform(n = 600): number[] {
   return out;
 }
 
-export function mockSpectrogram(freqBins = 96, timeBins = 200): number[][] {
-  const m: number[][] = [];
-  for (let f = 0; f < freqBins; f++) {
-    const row: number[] = [];
-    const harmonic = [8, 16, 24, 40].some((h) => Math.abs(f - h) < 2);
-    for (let t = 0; t < timeBins; t++) {
-      const base = harmonic ? 0.85 : 0.12;
-      const noise = Math.random() * 0.18;
-      const decay = Math.exp(-f / 60);
-      row.push(Math.min(1, base * decay + noise * 0.4));
-    }
-    m.push(row);
-  }
-  return m;
-}
-
 // 실시간 스펙트럼(EQ 곡선) 목 — 로그 주파수 + 포먼트형 피크 + 롤오프
 export function mockSpectrum(n = 180): { freqs: number[]; db: number[] } {
   const fmin = 50, fmax = 16000;
@@ -111,7 +95,6 @@ export function mockSpectrum(n = 180): { freqs: number[]; db: number[] } {
 export const mockAnalysis: AnalysisResult = {
   duration: 1.6,
   waveform: mockWaveform(),
-  spectrogram: mockSpectrogram(),
   metrics: mockMetrics,
 };
 
@@ -122,7 +105,6 @@ const beforeAdjust: Record<string, number> = {
 export const mockAnalysisBefore: AnalysisResult = {
   duration: 1.5,
   waveform: mockWaveform(),
-  spectrogram: mockSpectrogram(),
   metrics: mockMetrics.map((m) =>
     m.key in beforeAdjust ? { ...m, value: beforeAdjust[m.key] } : m
   ),

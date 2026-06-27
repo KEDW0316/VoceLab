@@ -10,7 +10,6 @@ from vocelab.webapp import (
     analysis_payload,
     metrics_payload,
     scale_payload,
-    spectrogram_payload,
     waveform_payload,
 )
 from vocelab.analysis import analyze
@@ -35,13 +34,6 @@ def test_waveform_payload_downsamples_and_normalizes():
 
 def test_waveform_payload_empty():
     assert waveform_payload(np.zeros((0, 1), dtype="float32")) == []
-
-
-def test_spectrogram_payload_shape_and_range():
-    grid = spectrogram_payload(_vowel(), SR, freq_rows=96, time_cols=200)
-    assert len(grid) <= 96 and len(grid) > 0
-    assert all(len(row) <= 200 for row in grid)
-    assert all(0.0 <= v <= 1.0 for row in grid for v in row)
 
 
 def test_metrics_payload_includes_reference_and_is_serializable():

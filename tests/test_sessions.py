@@ -10,7 +10,6 @@ def _payload(cpps=8.0, dur=1.2):
     return {
         "duration": dur,
         "waveform": [0.1, 0.2, 0.3],
-        "spectrogram": [[0.1, 0.2]],
         "metrics": [
             {"key": "cpps", "label": "CPPS", "value": cpps, "status": "good", "unit": "dB"},
             {"key": "hnr", "label": "HNR", "value": 22.0, "status": "good", "unit": "dB"},

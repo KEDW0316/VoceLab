@@ -20,7 +20,7 @@ from vocelab.analysis.metrics import VoiceMetrics, to_mono_f64
 from vocelab.analysis.rating import direction, rate
 from vocelab.analysis.references import reference_for
 from vocelab.audio import AudioEngine, input_devices, output_devices
-from vocelab.dsp import representative_window, spectrogram_db, spectrum
+from vocelab.dsp import representative_window, spectrum
 from vocelab.scales import SCALES, get_scale
 from vocelab.sessions import SessionStore
 from vocelab.synth import freq_to_note, note_name_to_freq, solfege, synthesize
@@ -73,22 +73,6 @@ def waveform_payload(samples: np.ndarray, points: int = 600) -> list[float]:
     usable = bucket * points
     env = np.abs(mono[:usable]).reshape(points, bucket).max(axis=1) / peak
     return [round(float(v), 4) for v in env]
-
-
-def spectrogram_payload(
-    samples: np.ndarray, samplerate: int, freq_rows: int = 96, time_cols: int = 200
-) -> list[list[float]]:
-    """로그 스펙트로그램을 [freq][time] (0..1) 격자로 다운샘플."""
-    mono = to_mono_f64(samples)
-    if mono.size < 64:
-        return []
-    _times, freqs, db = spectrogram_db(mono, samplerate)  # db: (nf, nt) in [-90,0]
-    norm = np.clip((db + 90.0) / 90.0, 0.0, 1.0)
-    nf, nt = norm.shape
-    fi = np.linspace(0, nf - 1, min(freq_rows, nf)).astype(int)
-    ti = np.linspace(0, nt - 1, min(time_cols, nt)).astype(int)
-    grid = norm[np.ix_(fi, ti)]
-    return [[round(float(v), 3) for v in row] for row in grid]
 
 
 def analysis_payload(samples: np.ndarray, samplerate: int) -> dict:

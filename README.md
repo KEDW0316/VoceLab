@@ -1,67 +1,133 @@
+<div align="center">
+
+<img src="branding/VoceLab-1024.png" alt="VoceLab" width="116" />
+
 # VoceLab
 
-보컬 트레이닝 보조 **데스크톱 앱**. 오디오 인터페이스로 녹음하고 즉시 들어보며,
-**실시간 음정·스펙트럼**과 **Praat 기반 음향 지표(CPPS·HNR·지터·쉬머)** 로 발성을
-객관적으로 분석한다. 녹음·기록은 전부 로컬에만 저장된다(서버 전송 없음).
+**Record your voice, hear it back the instant you stop, and see what your voice is actually doing.**
 
-> 🌐 소개·다운로드: **https://kedw0316.github.io/VoceLab/**
-> ☕ 후원: **https://ko-fi.com/pongtuna**
+A desktop vocal‑training studio. Capture from your audio interface like a DAW, play the take back immediately for feedback, and read Praat‑grade acoustic metrics — all offline, nothing leaves your machine.
 
-## 주요 기능
-- 🎙 **녹음 & 즉시 재생** — 파형 클릭으로 원하는 지점부터 재생
-- 🎵 **실시간 음정** — 노트+옥타브(한글 "2옥 도")와 센트, 녹음/재생/모니터 공통
-- 📊 **실시간 스펙트럼** — DAW EQ식 막대 분석기 + 프리즈
-- 🔬 **음향 지표** — CPPS·HNR·지터·쉬머(Praat 엔진), 양호/주의/개선 색 표시
-- 🎹 **스케일 연습** — 워밍업 스케일 17종 + 가이드 톤 + 키 트랜스포즈
-- 📈 **기록 & 전후 비교** — 녹음마다 자동 저장, 워밍업 전/후 델타
+[**English**](README.md) · [한국어](README.ko.md)
 
-## 아키텍처
-- **백엔드(Python)**: 오디오 I/O(`sounddevice`/PortAudio), 음향 분석(`praat-parselmouth`),
-  신호처리(`scipy`/`numpy`). UI에 비의존이라 단독 테스트 가능.
-- **프론트엔드(웹)**: React + TypeScript + Tailwind. `pywebview`가 네이티브 창에 띄우고,
-  `window.pywebview.api`로 백엔드를 호출.
+[![Release](https://img.shields.io/github/v/release/kedw0316/vocelab?include_prereleases&sort=semver&label=download&color=14b8a6)](https://github.com/kedw0316/vocelab/releases/latest)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS-2dd4bf)](https://github.com/kedw0316/vocelab/releases/latest)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Website](https://img.shields.io/badge/website-kedw0316.github.io%2FVoceLab-6b7280)](https://kedw0316.github.io/VoceLab/)
 
-```
-src/vocelab/        # Python: audio / analysis / dsp / scales / synth / sessions / webapp
-frontend/           # React 웹 UI (Vite)
-packaging/          # PyInstaller(.spec) + Inno Setup(.iss) 설치파일
-site/               # 랜딩 페이지(GitHub Pages)
-docs/               # 음향 지표 출처·발성 연습 레퍼런스
-```
+<img src="docs/img/screenshot-en.png" alt="VoceLab interface" width="840" />
 
-## 개발 환경에서 실행
-사전: Python 3.11+, Node 18+
+</div>
+
+---
+
+## Why VoceLab — the core loop
+
+Singers don't improve from charts. They improve from **hearing themselves** and reacting. So VoceLab is built around one tight loop, and everything else exists to serve it:
+
+> ### 🎙 Record → ▶️ Hear it back instantly → 👂 Notice → 🎚 Adjust → 🔁 Again
+
+Hit record, sing or speak, hit stop — and **the take plays back the moment you stop**, optionally on a loop. The feedback lands while the muscle memory is still warm, the way a good vocal coach makes you sing a phrase right back. Then the objective metrics confirm what your ears just caught, so "that felt breathy" becomes a number you can watch trend over sessions.
+
+That immediate **record‑then‑listen** moment is the whole point of the app — not an afterthought.
+
+## Features
+
+- 🎙 **Record & instant playback** — stop recording and the take plays right back; click anywhere on the waveform to replay from that point, or loop it for drilling.
+- 🔁 **Feedback loop mode** — the take auto‑repeats the instant you stop, so you can compare your memory of it against what actually came out.
+- 🎵 **Live pitch** — note + octave and cents, in either Korean vocal octave (`3옥 도`) or scientific notation (`C4`), for live input, playback, and monitoring.
+- 📊 **Live spectrum** — a DAW‑style EQ bar analyzer with freeze.
+- 🔬 **Acoustic metrics** — CPPS · HNR · Jitter · Shimmer from the Praat engine, color‑graded good / watch / needs‑work.
+- 🎹 **Scale practice** — 17 warm‑up scales with guide tones and key transposition.
+- 📈 **History & before/after** — every take is saved locally; set any take as a baseline to see the delta.
+- 🌐 **Korean / English** — pick your language on first launch, switch anytime in Settings.
+- 🔒 **Fully local** — recordings and history stay on your disk. No account, no upload.
+
+## What the metrics mean
+
+These four are research‑backed measures of voice quality, computed with the same Praat engine clinicians use:
+
+| Metric | What it measures | Better when |
+| --- | --- | --- |
+| **CPPS** | Cepstral Peak Prominence — overall clarity & periodicity of the voice (the most robust single quality measure) | **higher** (≥ ~4 dB) |
+| **HNR** | Harmonics‑to‑noise ratio — how clean vs. breathy the tone is | **higher** (≥ ~20 dB) |
+| **Jitter** | cycle‑to‑cycle frequency perturbation — pitch steadiness | **lower** (< ~1%) |
+| **Shimmer** | cycle‑to‑cycle amplitude perturbation — loudness steadiness | **lower** (< ~3.8%) |
+
+Sources and thresholds: [`docs/REFERENCES.md`](./docs/REFERENCES.md).
+
+## Download
+
+Grab the latest installer from the [**Releases**](https://github.com/kedw0316/vocelab/releases/latest) page:
+
+- **Windows** — `VoceLab-Setup.exe` → run it to install.
+- **macOS** — `VoceLab.dmg` → open and drag VoceLab into Applications.
+
+> macOS builds are unsigned, so the first launch may be blocked. Right‑click the app → **Open** to run it once; after that it opens normally.
+
+<div align="center"><img src="docs/img/welcome.png" alt="First‑run language setup" width="360" /></div>
+
+## Run from source
+
+Prerequisites: **Python 3.11+**, **Node 18+**.
 
 ```bash
-# 1) 프론트엔드 빌드 (UI 변경 시마다)
+# 1) Build the web UI (rebuild whenever the frontend changes)
 cd frontend && npm install && npm run build && cd ..
 
-# 2) 백엔드 설치 후 실행
+# 2) Install the backend and launch
 python -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\Activate.ps1
 pip install -e .
 python -m vocelab
 ```
-프론트엔드 단독 개발: `cd frontend && npm run dev` (백엔드 없으면 목 데이터로 동작).
-디버그(개발자도구): `VOCELAB_DEBUG=1 python -m vocelab`.
 
-## 테스트
+Frontend‑only dev: `cd frontend && npm run dev` (runs on mock data without a backend).
+Open devtools: `VOCELAB_DEBUG=1 python -m vocelab`.
+
 ```bash
-pip install pytest
-PYTHONPATH=src pytest        # 하드웨어 불필요한 단위 테스트
+# Tests (no audio hardware needed)
+pip install pytest && PYTHONPATH=src pytest
 ```
 
-## 배포 (설치파일)
-태그를 푸시하면 GitHub Actions가 Windows 설치 마법사(`VoceLab-Setup.exe`)와
-macOS 디스크이미지(`VoceLab.dmg`)를 빌드해 Release에 첨부한다.
+## Architecture
+
+- **Backend (Python)** — audio I/O (`sounddevice` / PortAudio), acoustic analysis (`praat-parselmouth`), signal processing (`scipy` / `numpy`). UI‑agnostic, so the engine is unit‑testable on its own.
+- **Frontend (web)** — React + TypeScript + Tailwind, hosted in a native window by `pywebview`; it talks to the backend over `window.pywebview.api`.
+
+```
+src/vocelab/   # Python: audio / analysis / dsp / scales / synth / sessions / webapp
+frontend/      # React web UI (Vite) with KO/EN i18n
+packaging/     # PyInstaller (.spec) + Inno Setup (.iss) installer
+site/          # Landing page (GitHub Pages)
+docs/          # Metric sources & vocal-exercise references
+```
+
+## Releases
+
+Pushing a `v*` tag builds the Windows installer and the macOS DMG via GitHub Actions and attaches them to a GitHub Release:
+
 ```bash
 git tag v0.1.0 && git push origin v0.1.0
 ```
-자세한 내용·서명 안내: [`packaging/README.md`](./packaging/README.md)
 
-## 참고
-- 의료·진단 도구가 아닙니다. 음성 문제가 지속되면 전문가(이비인후과/언어재활사) 상담을 권합니다.
-- 지표 근거: [`docs/REFERENCES.md`](./docs/REFERENCES.md) · 발성 연습: [`docs/VOCAL_EXERCISES.md`](./docs/VOCAL_EXERCISES.md)
+Details and signing notes: [`packaging/README.md`](./packaging/README.md).
 
-## 라이선스
+## Roadmap
+
+- [ ] Voice Range Profile (VRP) accumulation across sessions
+- [ ] Singer's Formant / SPR and vibrato readouts in the lean UI
+- [ ] Composite score (AVQI‑style) to track one number over time
+- [ ] Signed / notarized macOS build
+
+## Note
+
+VoceLab is **not a medical or diagnostic device**. If a voice problem persists, please see a specialist (ENT / speech‑language pathologist).
+
+## Support
+
+If VoceLab helps your practice, you can [**buy me a coffee on Ko‑fi ☕**](https://ko-fi.com/pongtuna). Totally optional — it keeps the project moving.
+
+## License
+
 [MIT](./LICENSE)

@@ -75,7 +75,24 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
+          name: VoceLab ${{ github.ref_name }}
           fail_on_unmatched_files: false
+          body: |
+            보컬 트레이닝 보조 앱 **VoceLab**의 첫 정식 릴리스입니다. 🎤
+
+            ## 다운로드
+            - **Windows** — `VoceLab-Setup.exe` 내려받아 실행하면 설치됩니다.
+            - **macOS** — `VoceLab.dmg` 를 열어 VoceLab을 Applications로 드래그하세요.
+
+            ## 주요 기능
+            - 오디오 인터페이스/마이크 입력 → 버튼 녹음 → 즉시 재생 (피드백 반복재생)
+            - Praat 기반 음향 지표: **CPPS · HNR · 지터 · 쉬머**
+            - 실시간 스펙트럼 + 실시간 음정 (한국식 옥타브·도레미 ↔ 과학적 음이름)
+            - 보컬 워밍업 스케일 17종 + 가이드 톤
+            - 녹음 기록 저장 · 전후 비교(베이스라인)
+            - **한국어 / English** 지원 (첫 실행 시 언어 선택)
+
+            > macOS는 코드 서명이 없어 처음 열 때 차단될 수 있습니다 — 앱을 **우클릭 → 열기**로 실행하세요.
           files: |
             dist/VoceLab-Setup.exe
             dist/VoceLab.dmg

@@ -5,9 +5,12 @@ import { api, whenBackendReady } from "@/lib/api";
 import { mockAnalysis } from "@/lib/mock";
 import { loadPref, savePref } from "@/lib/storage";
 import { useI18n } from "@/lib/i18n";
+import { useDevices } from "@/lib/useDevices";
 import { Panel } from "@/components/ui/panel";
 import { Header } from "@/components/Header";
-import { DeviceBar } from "@/components/DeviceBar";
+import { StatusBar } from "@/components/StatusBar";
+import { Settings } from "@/components/Settings";
+import { Welcome } from "@/components/Welcome";
 import { Waveform } from "@/components/Waveform";
 import { SpectrumPanel } from "@/components/SpectrumPanel";
 import { MetricsPanel } from "@/components/MetricsPanel";
@@ -24,9 +27,9 @@ function toBaselineMap(r: AnalysisResult): Record<string, number | null> {
 type Status = { key: string; vars?: Record<string, string | number> };
 
 export default function App() {
-  const { t } = useI18n();
-  const [inputIdx, setInputIdx] = useState<number | null>(null);
-  const [outputIdx, setOutputIdx] = useState<number | null>(null);
+  const { t, onboarded, completeOnboarding } = useI18n();
+  const devices = useDevices();
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [recording, setRecording] = useState(false);
   const [feedback, setFeedback] = useState(() => loadPref("feedback") === "1");
   const [level, setLevel] = useState(0);
@@ -74,10 +77,6 @@ export default function App() {
     savePref("feedback", feedback ? "1" : "0");
   }, [feedback]);
 
-  useEffect(() => {
-    api.set_output_device(outputIdx);
-  }, [outputIdx]);
-
   // 백엔드(pywebview) 준비를 기다린 뒤 한 번만 판단한다.
   // 실제 백엔드면 빈 화면에서 시작(데모 데이터 X), 진짜 브라우저면 데모/시드 표시.
   useEffect(() => {
@@ -111,7 +110,7 @@ export default function App() {
     if (!recording) {
       stopPlay();
       setPlayhead(0);
-      await api.start_recording(inputIdx);
+      await api.start_recording(devices.inputIdx);
       setRecording(true);
       setStatus({ key: "st.recording" });
       pollLevel();
@@ -141,7 +140,7 @@ export default function App() {
         });
       });
     }
-  }, [recording, inputIdx, feedback, pollLevel, refreshSessions, stopPlay]);
+  }, [recording, devices.inputIdx, feedback, pollLevel, refreshSessions, stopPlay]);
 
   // 세션 핸들러
   const loadSession = async (id: string) => {
@@ -189,12 +188,11 @@ export default function App() {
   }, [onRecordToggle]);
 
   return (
-    <div className="vl-enter flex h-screen flex-col gap-2 p-3">
-      <Header recording={recording} status={t(status.key, status.vars)} />
-      <DeviceBar onInputChange={setInputIdx} onOutputChange={setOutputIdx} />
+    <div className="flex h-screen flex-col">
+      <Header onOpenSettings={() => setSettingsOpen(true)} />
 
       {/* 2단: 좌(시각화) / 우(컨트롤·연습·기록) */}
-      <div className="grid min-h-0 flex-1 grid-cols-[1fr_minmax(320px,360px)] gap-2">
+      <main className="vl-enter grid min-h-0 flex-1 grid-cols-[1fr_minmax(320px,360px)] gap-2 p-3">
         {/* 좌측 — 파형(컴팩트) + 스펙트럼(세로로 길게) + 핵심 지표 */}
         <div className="flex min-h-0 flex-col gap-2">
           <Panel
@@ -213,7 +211,7 @@ export default function App() {
               onSeek={playFrom}
             />
           </Panel>
-          <SpectrumPanel inputIdx={inputIdx} recording={recording} />
+          <SpectrumPanel inputIdx={devices.inputIdx} recording={recording} />
           <MetricsPanel metrics={result?.metrics ?? []} baseline={baseline} />
         </div>
 
@@ -244,7 +242,18 @@ export default function App() {
           {/* 남는 공간에 큰 실시간 음정 */}
           <PitchView />
         </div>
-      </div>
+      </main>
+
+      <StatusBar
+        inputLabel={devices.inputLabel}
+        outputLabel={devices.outputLabel}
+        status={t(status.key, status.vars)}
+        recording={recording}
+        onOpenSettings={() => setSettingsOpen(true)}
+      />
+
+      <Settings open={settingsOpen} onClose={() => setSettingsOpen(false)} devices={devices} />
+      {!onboarded && <Welcome devices={devices} onDone={completeOnboarding} />}
     </div>
   );
 }

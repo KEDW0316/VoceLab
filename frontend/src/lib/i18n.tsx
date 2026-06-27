@@ -3,6 +3,15 @@ import { createContext, useCallback, useContext, useState, type ReactNode } from
 export type Lang = "ko" | "en";
 
 const STORAGE = "vocelab.lang";
+const STORAGE_ONBOARDED = "vocelab.onboarded";
+
+function readOnboarded(): boolean {
+  try {
+    return localStorage.getItem(STORAGE_ONBOARDED) === "1";
+  } catch {
+    return false;
+  }
+}
 
 export function detectLang(): Lang {
   try {
@@ -20,6 +29,33 @@ const DICT: Record<string, { ko: string; en: string }> = {
   "donate": { ko: "후원", en: "Donate" },
   "donate.title": { ko: "개발자에게 커피 한 잔 ☕", en: "Buy the developer a coffee ☕" },
   "device.refresh": { ko: "장치 새로고침", en: "Refresh devices" },
+
+  // Header / Settings
+  "header.settings": { ko: "설정", en: "Settings" },
+  "settings.title": { ko: "설정", en: "Settings" },
+  "settings.language": { ko: "언어", en: "Language" },
+  "settings.input": { ko: "입력 장치 (마이크)", en: "Input (microphone)" },
+  "settings.output": { ko: "출력 장치 (스피커)", en: "Output (speaker)" },
+  "settings.theme": { ko: "테마", en: "Theme" },
+  "settings.theme.dark": { ko: "다크", en: "Dark" },
+  "settings.done": { ko: "완료", en: "Done" },
+
+  // Welcome (first run)
+  "welcome.greeting": { ko: "VoceLab에 오신 걸 환영해요", en: "Welcome to VoceLab" },
+  "welcome.subtitle": {
+    ko: "녹음하고 바로 듣고, Praat 기반 음향 지표로 발성을 확인하세요.",
+    en: "Record, play back instantly, and check your voice with Praat-based metrics.",
+  },
+  "welcome.lang": { ko: "언어 / Language", en: "Language / 언어" },
+  "welcome.device": { ko: "입력 장치 (마이크)", en: "Input device (microphone)" },
+  "welcome.device.none": {
+    ko: "장치를 찾는 중… 나중에 설정에서 선택할 수 있어요.",
+    en: "Looking for devices… you can pick one later in Settings.",
+  },
+  "welcome.start": { ko: "시작하기", en: "Get started" },
+
+  // Status bar
+  "statusbar.noDevice": { ko: "장치 없음", en: "No device" },
 
   // Transport
   "transport.record": { ko: "녹음", en: "Record" },
@@ -125,16 +161,33 @@ interface Ctx {
   lang: Lang;
   setLang: (l: Lang) => void;
   t: (key: string, vars?: Record<string, string | number>) => string;
+  onboarded: boolean;
+  completeOnboarding: () => void;
 }
 
-const I18nContext = createContext<Ctx>({ lang: "en", setLang: () => {}, t: (k) => k });
+const I18nContext = createContext<Ctx>({
+  lang: "en",
+  setLang: () => {},
+  t: (k) => k,
+  onboarded: true,
+  completeOnboarding: () => {},
+});
 
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(detectLang);
+  const [onboarded, setOnboarded] = useState<boolean>(readOnboarded);
   const setLang = useCallback((l: Lang) => {
     setLangState(l);
     try {
       localStorage.setItem(STORAGE, l);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+  const completeOnboarding = useCallback(() => {
+    setOnboarded(true);
+    try {
+      localStorage.setItem(STORAGE_ONBOARDED, "1");
     } catch {
       /* ignore */
     }
@@ -147,7 +200,11 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     },
     [lang]
   );
-  return <I18nContext.Provider value={{ lang, setLang, t }}>{children}</I18nContext.Provider>;
+  return (
+    <I18nContext.Provider value={{ lang, setLang, t, onboarded, completeOnboarding }}>
+      {children}
+    </I18nContext.Provider>
+  );
 }
 
 export const useI18n = () => useContext(I18nContext);

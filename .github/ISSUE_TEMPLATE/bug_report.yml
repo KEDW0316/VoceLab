@@ -1,0 +1,34 @@
+name: 🐞 Bug report
+description: Something isn't working right
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you do, and what went wrong?
+      placeholder: I pressed Record and… / The playback didn't start after stopping…
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS
+      placeholder: Windows 11 / macOS 14 (Apple Silicon or Intel)
+    validations:
+      required: true
+  - type: input
+    id: audio-device
+    attributes:
+      label: Audio interface / mic
+      placeholder: Focusrite Scarlett 2i2, built-in mic, etc.
+  - type: input
+    id: version
+    attributes:
+      label: VoceLab version
+      placeholder: v0.1.0 (see the release you downloaded)
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Screenshots, console output (`VOCELAB_DEBUG=1 python -m vocelab`), etc.
